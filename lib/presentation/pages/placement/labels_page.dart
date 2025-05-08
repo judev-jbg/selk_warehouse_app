@@ -10,8 +10,6 @@ import '../../bloc/placement/labels_state.dart';
 // Clases Mock para pruebas
 import 'package:dartz/dartz.dart';
 import '../../../core/errors/failures.dart';
-import '../../../domain/entities/label.dart';
-import '../../../domain/entities/product.dart';
 import '../../../domain/usecases/placement/get_labels.dart';
 import '../../../domain/usecases/placement/print_labels.dart';
 import '../../../domain/usecases/placement/delete_label.dart';
