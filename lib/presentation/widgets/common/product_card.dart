@@ -153,34 +153,59 @@ class ProductCard extends StatelessWidget {
       text: initialValue,
     );
 
+    // Usamos StatefulBuilder para manejar el estado dentro del diálogo
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
-            title: Text('Editar $label'),
-            content: TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                labelText: label,
-                border: OutlineInputBorder(),
-              ),
-              autofocus: true,
-              keyboardType:
-                  field == 'stock' ? TextInputType.number : TextInputType.text,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Cancelar'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  onUpdate(field, controller.text);
-                },
-                child: Text('Guardar'),
-              ),
-            ],
+          (context) => StatefulBuilder(
+            builder: (context, setState) {
+              // Variable para controlar si el valor ha cambiado
+              bool hasChanged = controller.text != initialValue;
+
+              // Listener para detectar cambios en el valor
+              controller.addListener(() {
+                setState(() {
+                  hasChanged = controller.text != initialValue;
+                });
+              });
+
+              return AlertDialog(
+                title: Text('Editar $label'),
+                content: TextField(
+                  controller: controller,
+                  decoration: InputDecoration(
+                    labelText: label,
+                    border: OutlineInputBorder(),
+                    helperText: 'Valor actual: $initialValue',
+                  ),
+                  autofocus: true,
+                  keyboardType:
+                      field == 'stock'
+                          ? TextInputType.number
+                          : TextInputType.text,
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancelar'),
+                  ),
+                  ElevatedButton(
+                    onPressed:
+                        hasChanged
+                            ? () {
+                              Navigator.pop(context);
+                              onUpdate(field, controller.text);
+                            }
+                            : null, // Deshabilitar cuando no hay cambios
+                    child: Text('Guardar'),
+                    style: ElevatedButton.styleFrom(
+                      disabledBackgroundColor: Colors.grey[300],
+                      disabledForegroundColor: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
     );
   }
