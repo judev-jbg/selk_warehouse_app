@@ -96,7 +96,7 @@ class _LabelsPageContent extends StatelessWidget {
           return Container();
         },
       ),
-      bottomNavigationBar: BlocBuilder<LabelsBloc, LabelsState>(
+      floatingActionButton: BlocBuilder<LabelsBloc, LabelsState>(
         builder: (context, state) {
           if (state is LabelsLoaded &&
               state.labels.any((label) => label.selected)) {
@@ -122,6 +122,29 @@ class _LabelsPageContent extends StatelessWidget {
             );
           }
           return SizedBox(height: 0);
+        },
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.location_on),
+            label: 'Colocación',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.label), label: 'Etiquetas'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.logout),
+            label: 'Cerrar Sesión',
+          ),
+        ],
+        enableFeedback: true,
+        currentIndex: 1,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.of(context).pop();
+          } else if (index == 2) {
+            // Cerrar sesión - implementar lógica
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          }
         },
       ),
     );

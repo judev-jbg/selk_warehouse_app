@@ -107,11 +107,11 @@ class _PlacementPageContent extends StatelessWidget {
         onTap: (index) {
           if (index == 0) {
             Navigator.of(context).pop();
-          } else if (index == 1) {
+          } else if (index == 2) {
             Navigator.of(
               context,
             ).push(MaterialPageRoute(builder: (_) => LabelsPage()));
-          } else if (index == 2) {
+          } else if (index == 3) {
             // Cerrar sesión - implementar lógica
             Navigator.of(context).popUntil((route) => route.isFirst);
           }
