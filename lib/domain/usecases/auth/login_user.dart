@@ -2,13 +2,7 @@ import 'package:dartz/dartz.dart';
 import '../../entities/user.dart';
 import '../../../core/errors/failures.dart';
 import '../../repositories/auth_repository.dart';
-
-class LoginParams {
-  final String username;
-  final String password;
-
-  LoginParams({required this.username, required this.password});
-}
+import '../common/params.dart'; // Importar de aquí
 
 class LoginUser {
   final AuthRepository repository;

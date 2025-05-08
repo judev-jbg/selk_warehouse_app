@@ -7,7 +7,7 @@ import '../../bloc/auth/auth_state.dart';
 import '../home/home_page.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -19,6 +19,15 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Valores predeterminados para pruebas
+    _userController.text = 'operario1';
+    _passwordController.text = 'password123';
+  }
 
   @override
   void dispose() {
@@ -42,10 +51,24 @@ class _LoginPageState extends State<LoginPage> {
               _isLoading = false;
               _errorMessage = state.message;
             });
+            // Añadido: Mostrar snackbar con el error
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
           } else if (state is AuthAuthenticated) {
+            setState(() {
+              _isLoading = false;
+            });
             Navigator.of(
               context,
             ).pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
+          } else if (state is AuthUnauthenticated || state is AuthInitial) {
+            setState(() {
+              _isLoading = false;
+            });
           }
         },
         builder: (context, state) {
@@ -154,6 +177,26 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
+                    // Añadido: Botón de login temporal
+                    SizedBox(height: 20),
+                    if (_isLoading)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isLoading = false;
+                              });
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (_) => HomePage()),
+                              );
+                            },
+                            child: Text('Forzar Entrada (Debug)'),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

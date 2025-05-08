@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/themes/app_color.dart';
-import '../../bloc/auth/auth_bloc.dart';
-import '../../bloc/auth/auth_event.dart';
 import '../placement/placement_page.dart';
 import '../entry/entry_page.dart';
 import '../picking/picking_page.dart';
+import '../login/login_page.dart';
 
 class MenuItem {
   final String title;
@@ -21,16 +19,16 @@ class HomePage extends StatelessWidget {
 
   final List<MenuItem> menuItems = [
     MenuItem(
-      'Colocación',
-      'Gestión de ubicaciones de productos',
-      Icons.location_on,
-      PlacementPage(),
-    ),
-    MenuItem(
       'Entrada',
       'Registro de ingreso de productos',
       Icons.input,
       EntryPage(),
+    ),
+    MenuItem(
+      'Colocación',
+      'Ubicación y stock de productos',
+      Icons.location_on,
+      PlacementPage(),
     ),
     MenuItem(
       'Recogida',
@@ -43,9 +41,24 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Selk Warehouse'),
+        backgroundColor: AppColors.primary,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              // Simplificado para pruebas
+              Navigator.of(
+                context,
+              ).pushReplacement(MaterialPageRoute(builder: (_) => LoginPage()));
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
-          SizedBox(height: 80),
+          SizedBox(height: 20),
           Text(
             'Inicio',
             style: TextStyle(
@@ -85,10 +98,10 @@ class HomePage extends StatelessWidget {
             label: 'Cerrar Sesión',
           ),
         ],
+        currentIndex: 0,
         onTap: (index) {
           if (index == 2) {
-            // Cerrar sesión
-            context.read<AuthBloc>().add(LogoutEvent());
+            // Cerrar sesión simplificado
             Navigator.of(
               context,
             ).pushReplacement(MaterialPageRoute(builder: (_) => LoginPage()));

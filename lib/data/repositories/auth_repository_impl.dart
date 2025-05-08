@@ -1,22 +1,57 @@
 import 'package:dartz/dartz.dart';
-import '/domain/entities/user.dart';
+import '../../core/errors/exceptions.dart';
 import '../../core/errors/failures.dart';
+import '../../core/network/network_info.dart';
+import '../../domain/entities/user.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../datasources/local/auth_local_datasourse.dart';
+import '../datasources/remote/auth_remote_datasourse.dart';
+import '../models/user_model.dart';
 
-abstract class AuthRepository {
-  /// Inicia sesión con las credenciales proporcionadas
-  ///
-  /// Retorna un [User] si la autenticación es exitosa
-  /// o un [Failure] si ocurre un error
-  Future<Either<Failure, User>> login(String username, String password);
+class AuthRepositoryImpl implements AuthRepository {
+  final AuthRemoteDataSource remoteDataSource;
+  final AuthLocalDataSource localDataSource;
+  final NetworkInfo networkInfo;
 
-  /// Cierra la sesión del usuario actual
-  ///
-  /// Retorna void si es exitoso o un [Failure] si ocurre un error
-  Future<Either<Failure, void>> logout();
+  AuthRepositoryImpl({
+    required this.remoteDataSource,
+    required this.localDataSource,
+    required this.networkInfo,
+  });
 
-  /// Verifica si hay un usuario autenticado actualmente
-  ///
-  /// Retorna un [User] si hay un usuario autenticado
-  /// o un [Failure] si no hay sesión o ocurre un error
-  Future<Either<Failure, User>> checkAuthStatus();
+  @override
+  Future<Either<Failure, User>> login(String username, String password) async {
+    // Implementación temporal para pruebas
+    try {
+      if (await networkInfo.isConnected) {
+        try {
+          final userModel = await remoteDataSource.login(username, password);
+          await localDataSource.cacheUser(userModel);
+          return Right(userModel);
+        } on ServerException catch (e) {
+          return Left(ServerFailure(e.message));
+        }
+      } else {
+        return Left(NetworkFailure('No hay conexión a internet'));
+      }
+    } catch (e) {
+      return Left(UnexpectedFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> logout() async {
+    try {
+      await localDataSource.clearUser();
+      return const Right(null);
+    } catch (e) {
+      return Left(UnexpectedFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, User>> checkAuthStatus() async {
+    // Implementación temporal
+    return Left(AuthFailure('No hay sesión activa'));
+  }
 }

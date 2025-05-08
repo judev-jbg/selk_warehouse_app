@@ -1,61 +1,110 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
-import 'package:selk_warehouse_app/core/utils/simple_bloc_observer.dart';
-import 'app.dart';
-import 'core/network/network_info.dart';
-import 'data/datasources/local/auth_local_datasourse.dart';
-import 'data/datasources/remote/auth_remote_datasourse.dart';
-import 'data/repositories/auth_repository_impl.dart';
-import 'domain/repositories/auth_repository.dart';
-import 'domain/usecases/auth/login_user.dart';
-import 'domain/usecases/auth/logout_user.dart';
+import 'core/themes/app_theme.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
+import 'presentation/bloc/auth/auth_event.dart';
+import 'presentation/bloc/auth/auth_state.dart';
+import 'presentation/pages/login/login_page.dart';
+import 'presentation/pages/home/home_page.dart';
+import 'domain/entities/user.dart';
 
-final sl = GetIt.instance;
+// Reemplazo temporal de la inyección de dependencias
+final authBloc = AuthBloc(
+  loginUser: SimplifiedLoginUser(),
+  logoutUser: SimplifiedLogoutUser(),
+);
 
-Future<void> init() async {
-  // Blocs
-  sl.registerFactory(() => AuthBloc(loginUser: sl(), logoutUser: sl()));
-
-  // Use cases
-  sl.registerLazySingleton(() => LoginUser(sl()));
-  sl.registerLazySingleton(() => LogoutUser(sl()));
-
-  // Repositories
-  sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(
-      remoteDataSource: sl(),
-      localDataSource: sl(),
-      networkInfo: sl(),
-    ),
-  );
-
-  // Data sources
-  sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(client: sl()),
-  );
-
-  sl.registerLazySingleton<AuthLocalDataSource>(
-    () => AuthLocalDataSourceImpl(sharedPreferences: sl()),
-  );
-
-  // Core
-  sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
-
-  // External
-  final sharedPreferences = await SharedPreferences.getInstance();
-  sl.registerLazySingleton(() => sharedPreferences);
-  sl.registerLazySingleton(() => Dio());
-  sl.registerLazySingleton(() => InternetConnectionChecker());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // No llamamos a init() por ahora
+  runApp(MyApp());
 }
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await init();
-  if (kDebugMode) {
-    Bloc.observer = SimpleBlocObserver();
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [BlocProvider<AuthBloc>(create: (context) => authBloc)],
+      child: MaterialApp(
+        title: 'Selk Warehouse',
+        theme: AppTheme.lightTheme,
+        home: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, state) {
+            if (state is AuthAuthenticated) {
+              return HomePage();
+            }
+            return LoginPage();
+          },
+        ),
+      ),
+    );
   }
-  runApp(MyApp());
+}
+
+// Clases simplificadas para pruebas
+class SimplifiedLoginUser {
+  Future<Either<Failure, User>> call(LoginParams params) async {
+    // Simulamos una petición al backend
+    await Future.delayed(Duration(seconds: 1));
+
+    if (params.username == 'operario1' && params.password == 'password123') {
+      return Right(
+        User(
+          id: 1,
+          username: 'operario1',
+          name: 'Operario 1',
+          roles: ['operario'],
+          token: 'token-de-prueba',
+        ),
+      );
+    } else {
+      return Left(AuthFailure('Credenciales inválidas'));
+    }
+  }
+}
+
+class SimplifiedLogoutUser {
+  Future<Either<Failure, void>> call(NoParams params) async {
+    await Future.delayed(Duration(seconds: 1));
+    return Right(null);
+  }
+}
+
+// Para que el código compile
+class Either<L, R> {
+  final L? left;
+  final R? right;
+  final bool isRight;
+
+  Either._(this.left, this.right, this.isRight);
+
+  factory Either.left(L value) => Either._(value, null, false);
+  factory Either.right(R value) => Either._(null, value, true);
+
+  R getOrElse(R Function() defaultValue) {
+    return isRight ? right! : defaultValue();
+  }
+
+  bool get isLeft => !isRight;
+
+  B fold<B>(B Function(L) ifLeft, B Function(R) ifRight) {
+    return isRight ? ifRight(right!) : ifLeft(left!);
+  }
+}
+
+class Right<L, R> extends Either<L, R> {
+  Right(R value) : super._(null, value, true);
+}
+
+class Left<L, R> extends Either<L, R> {
+  Left(L value) : super._(value, null, false);
+}
+
+class Failure {
+  final String message;
+  const Failure(this.message);
+}
+
+class AuthFailure extends Failure {
+  const AuthFailure(String message) : super(message);
 }

@@ -3,7 +3,7 @@
 class ApiConstants {
   // URLs base
   static const String baseUrl =
-      'http://localhost:3000/api'; // Ajustar a tu configuración local
+      'http://192.168.1.33:3000/api'; // Ajustar a tu configuración local
 
   // Endpoints de autenticación
   static const String loginUrl = '$baseUrl/auth/login';

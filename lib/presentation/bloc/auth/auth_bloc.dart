@@ -1,12 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../domain/usecases/common/params.dart'; // Importar de aquí
 import '../../../domain/usecases/auth/login_user.dart';
 import '../../../domain/usecases/auth/logout_user.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final LoginUser loginUser;
-  final LogoutUser logoutUser;
+  final loginUser;
+  final logoutUser;
 
   AuthBloc({required this.loginUser, required this.logoutUser})
     : super(AuthInitial()) {
@@ -31,7 +32,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         (user) => emit(AuthAuthenticated(user)),
       );
     } catch (e) {
-      emit(AuthError('Error inesperado: $e'));
+      emit(AuthError('Error inesperado en la pp: $e'));
     }
   }
 
@@ -64,3 +65,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthUnauthenticated());
   }
 }
+
+// Clases auxiliares para que compile
+class LoginParams {
+  final String username;
+  final String password;
+  LoginParams({required this.username, required this.password});
+}
+
+class NoParams {}

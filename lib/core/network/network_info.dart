@@ -1,4 +1,4 @@
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 /// Interfaz para verificar el estado de la conexión a Internet
 abstract class NetworkInfo {
@@ -7,10 +7,13 @@ abstract class NetworkInfo {
 
 /// Implementación de NetworkInfo utilizando internet_connection_checker
 class NetworkInfoImpl implements NetworkInfo {
-  final InternetConnectionChecker connectionChecker;
+  final Connectivity connectivity;
 
-  NetworkInfoImpl(this.connectionChecker);
+  NetworkInfoImpl(this.connectivity);
 
   @override
-  Future<bool> get isConnected => connectionChecker.hasConnection;
+  Future<bool> get isConnected async {
+    final result = await connectivity.checkConnectivity();
+    return result != ConnectivityResult.none;
+  }
 }

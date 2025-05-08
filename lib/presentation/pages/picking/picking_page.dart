@@ -52,11 +52,8 @@ class PickingPage extends StatelessWidget {
                     SizedBox(height: 8),
                     Text(
                       'Las órdenes de carga se mostrarán aquí cuando estén disponibles',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                        textAlign: TextAlign.center,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),

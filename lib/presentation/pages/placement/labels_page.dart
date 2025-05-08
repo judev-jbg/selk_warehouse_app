@@ -67,11 +67,8 @@ class LabelsPage extends StatelessWidget {
                     SizedBox(height: 8),
                     Text(
                       'Las etiquetas se generan al modificar la ubicación de un producto',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                        textAlign: TextAlign.center,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
