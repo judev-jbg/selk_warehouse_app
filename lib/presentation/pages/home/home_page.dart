@@ -42,8 +42,9 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Selk Warehouse'),
+        title: Text('Selk'),
         backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.surface,
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
@@ -92,7 +93,6 @@ class HomePage extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Ajustes'),
           BottomNavigationBarItem(
             icon: Icon(Icons.logout),
             label: 'Cerrar Sesión',
@@ -100,7 +100,7 @@ class HomePage extends StatelessWidget {
         ],
         currentIndex: 0,
         onTap: (index) {
-          if (index == 2) {
+          if (index == 1) {
             // Cerrar sesión simplificado
             Navigator.of(
               context,
