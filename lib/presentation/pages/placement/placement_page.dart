@@ -25,12 +25,13 @@ class PlacementPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Para esta versión simplificada, usamos mocks
+    final mockRepository = MockPlacementRepository();
     return BlocProvider(
       create:
           (context) => PlacementBloc(
-            searchProduct: SearchProduct(MockPlacementRepository()),
-            updateLocation: UpdateLocation(MockPlacementRepository()),
-            updateStock: UpdateStock(MockPlacementRepository()),
+            searchProduct: SearchProduct(mockRepository),
+            updateLocation: UpdateLocation(mockRepository),
+            updateStock: UpdateStock(mockRepository),
           ),
       child: _PlacementPageContent(),
     );

@@ -15,18 +15,23 @@ import '../../../domain/entities/product.dart';
 import '../../../domain/usecases/placement/get_labels.dart';
 import '../../../domain/usecases/placement/print_labels.dart';
 import '../../../domain/usecases/placement/delete_label.dart';
+import '../../../domain/repositories/placement_repository.dart';
 
 class LabelsPage extends StatelessWidget {
   const LabelsPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Creamos un repositorio mock
+    final mockRepository = MockPlacementRepository();
+
+    // Creamos los casos de uso utilizando el repositorio mock
     return BlocProvider(
       create:
           (context) => LabelsBloc(
-            getLabels: MockGetLabels(),
-            printLabels: MockPrintLabels,
-            deleteLabel: MockDeleteLabel(),
+            getLabels: GetLabels(mockRepository),
+            printLabels: PrintLabels(mockRepository),
+            deleteLabel: DeleteLabel(mockRepository),
           )..add(GetLabelsEvent()),
       child: _LabelsPageContent(),
     );
@@ -203,8 +208,9 @@ class _LabelsPageContent extends StatelessWidget {
   }
 }
 
-class MockGetLabels {
-  final _mockLabels = [
+// Implementación del repositorio mock
+class MockPlacementRepository implements PlacementRepository {
+  final List<Label> _labels = [
     Label(
       id: '1',
       product: Product(
@@ -218,8 +224,6 @@ class MockGetLabels {
         status: 'Activo',
       ),
       createdAt: '2025-05-08 10:30:00',
-      printed: false,
-      selected: false,
     ),
     Label(
       id: '2',
@@ -234,50 +238,153 @@ class MockGetLabels {
         status: 'Activo',
       ),
       createdAt: '2025-05-08 11:15:00',
-      printed: false,
-      selected: false,
     ),
   ];
 
-  Future<Either<Failure, List<Label>>> call(NoParams params) async {
-    await Future.delayed(Duration(seconds: 1)); // Simular latencia
-    return Right(_mockLabels);
-  }
-}
+  // Productos de ejemplo
+  final Map<String, Product> _products = {
+    '7898422746759': Product(
+      id: '1',
+      reference: '5808  493256E',
+      description: 'Tornillo hexagonal M8x40',
+      barcode: '7898422746759',
+      location: 'A102',
+      stock: 120.0,
+      unit: 'unidades',
+      status: 'Activo',
+    ),
+    '7898422746760': Product(
+      id: '2',
+      reference: '5810  493258E',
+      description: 'Tornillo hexagonal M10x60',
+      barcode: '7898422746760',
+      location: 'A103',
+      stock: 85.0,
+      unit: 'unidades',
+      status: 'Activo',
+    ),
+    '7898422746761': Product(
+      id: '3',
+      reference: '9999  503',
+      description: 'Tornillo especial zincado',
+      barcode: '7898422746761',
+      location: 'B201',
+      stock: 42.0,
+      unit: 'unidades',
+      status: 'Activo',
+    ),
+  };
 
-class MockPrintLabels {
-  Future<Either<Failure, List<Label>>> call(PrintLabelsParams params) async {
+  @override
+  Future<Either<Failure, Product>> searchProductByBarcode(
+    String barcode,
+  ) async {
+    await Future.delayed(Duration(seconds: 1)); // Simular latencia
+
+    final product = _products[barcode];
+    if (product != null) {
+      return Right(product);
+    } else {
+      return Left(
+        NotFoundFailure(
+          'No se encontró ningún producto con el código $barcode',
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, Product>> updateProductLocation(
+    String productId,
+    String newLocation,
+  ) async {
+    await Future.delayed(Duration(seconds: 1)); // Simular latencia
+
+    try {
+      final product = _products.values.firstWhere((p) => p.id == productId);
+      final updatedProduct = product.copyWith(location: newLocation);
+
+      // Actualizar el producto en el mapa
+      _products[updatedProduct.barcode] = updatedProduct;
+
+      // Crear una etiqueta para este producto
+      _labels.add(
+        Label(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          product: updatedProduct,
+          createdAt: DateTime.now().toString(),
+        ),
+      );
+
+      return Right(updatedProduct);
+    } catch (e) {
+      return Left(
+        NotFoundFailure('No se encontró ningún producto con el ID $productId'),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, Product>> updateProductStock(
+    String productId,
+    double newStock,
+  ) async {
+    await Future.delayed(Duration(seconds: 1)); // Simular latencia
+
+    try {
+      final product = _products.values.firstWhere((p) => p.id == productId);
+      final updatedProduct = product.copyWith(stock: newStock);
+
+      // Actualizar el producto en el mapa
+      _products[updatedProduct.barcode] = updatedProduct;
+
+      return Right(updatedProduct);
+    } catch (e) {
+      return Left(
+        NotFoundFailure('No se encontró ningún producto con el ID $productId'),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Label>>> getPendingLabels() async {
+    await Future.delayed(Duration(seconds: 1)); // Simular latencia
+    return Right(_labels);
+  }
+
+  @override
+  Future<Either<Failure, List<Label>>> printLabels(
+    List<String> labelIds,
+  ) async {
     await Future.delayed(Duration(seconds: 2)); // Simular impresión
-    return Right(
-      params.labelIds
-          .map(
-            (id) => Label(
-              id: id,
-              product: Product(
-                id: '1',
-                reference: '5808  493256E',
-                description: 'Tornillo hexagonal M8x40',
-                barcode: '7898422746759',
-                location: 'A102',
-                stock: 120.0,
-                unit: 'unidades',
-                status: 'Activo',
-              ),
-              createdAt: '2025-05-08 10:30:00',
-              printed: true,
-              selected: false,
-            ),
-          )
-          .toList(),
-    );
-  }
-}
 
-class MockDeleteLabel {
-  Future<Either<Failure, void>> call(DeleteLabelParams params) async {
+    final printedLabels = <Label>[];
+
+    for (var id in labelIds) {
+      final index = _labels.indexWhere((label) => label.id == id);
+      if (index != -1) {
+        final label = _labels[index];
+        final updatedLabel = label.copyWith(printed: true);
+        _labels[index] = updatedLabel;
+        printedLabels.add(updatedLabel);
+      }
+    }
+
+    return Right(printedLabels);
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteLabel(String labelId) async {
     await Future.delayed(Duration(seconds: 1)); // Simular latencia
+
+    _labels.removeWhere((label) => label.id == labelId);
+
     return Right(null);
   }
+}
+
+class NotFoundFailure extends Failure {
+  NotFoundFailure(String message) : super(message);
 }
 
 class NoParams {}
