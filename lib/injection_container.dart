@@ -1,6 +1,7 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/device/sunmi_scanner_service.dart';
@@ -53,5 +54,5 @@ Future<void> init() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
   sl.registerLazySingleton(() => Dio());
-  sl.registerLazySingleton(() => InternetConnectionChecker.createInstance());
+  sl.registerLazySingleton(() => Connectivity());
 }
