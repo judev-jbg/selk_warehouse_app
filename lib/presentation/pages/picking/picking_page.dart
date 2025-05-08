@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/themes/app_colors.dart';
-import '../../../domain/entities/load_order.dart';
+import '../../../domain/entities/order.dart';
 import '../../bloc/picking/picking_bloc.dart';
 import '../../bloc/picking/picking_event.dart';
 import '../../bloc/picking/picking_state.dart';

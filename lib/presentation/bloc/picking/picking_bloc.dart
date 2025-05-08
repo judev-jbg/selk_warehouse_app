@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../domain/entities/load_order.dart';
+import '../../../domain/entities/order.dart';
 import 'picking_event.dart';
 import 'picking_state.dart';
 

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../domain/entities/load_order.dart';
+import '../../../domain/entities/order.dart';
 
 abstract class PickingEvent extends Equatable {
   const PickingEvent();
