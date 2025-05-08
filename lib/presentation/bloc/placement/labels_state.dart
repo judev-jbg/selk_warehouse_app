@@ -23,6 +23,24 @@ class LabelsLoaded extends LabelsState {
 
 class LabelsEmpty extends LabelsState {}
 
+class LabelsPrintSuccess extends LabelsState {
+  final List<Label> printedLabels;
+
+  const LabelsPrintSuccess(this.printedLabels);
+
+  @override
+  List<Object?> get props => [printedLabels];
+}
+
+class LabelDeleteSuccess extends LabelsState {
+  final String labelId;
+
+  const LabelDeleteSuccess(this.labelId);
+
+  @override
+  List<Object?> get props => [labelId];
+}
+
 class LabelsError extends LabelsState {
   final String message;
 
@@ -31,7 +49,3 @@ class LabelsError extends LabelsState {
   @override
   List<Object?> get props => [message];
 }
-
-class LabelsPrintSuccess extends LabelsState {}
-
-class LabelDeleteSuccess extends LabelsState {}

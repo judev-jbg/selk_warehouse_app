@@ -49,4 +49,17 @@ class ProductModel extends Product {
       'status': status,
     };
   }
+
+  factory ProductModel.fromEntity(Product product) {
+    return ProductModel(
+      id: product.id,
+      reference: product.reference,
+      description: product.description,
+      barcode: product.barcode,
+      location: product.location,
+      stock: product.stock,
+      unit: product.unit,
+      status: product.status,
+    );
+  }
 }

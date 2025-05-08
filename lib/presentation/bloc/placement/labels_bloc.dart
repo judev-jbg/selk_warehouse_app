@@ -1,14 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/label.dart';
-import '../../../domain/entities/product.dart';
+import '../../../domain/usecases/placement/get_labels.dart';
+import '../../../domain/usecases/placement/print_labels.dart';
+import '../../../domain/usecases/placement/delete_label.dart';
 import 'labels_event.dart';
 import 'labels_state.dart';
 
 class LabelsBloc extends Bloc<LabelsEvent, LabelsState> {
-  // Temporalmente utiliza funciones vacías hasta que implementemos los casos de uso reales
-  final dynamic getLabels;
-  final dynamic printLabels;
-  final dynamic deleteLabel;
+  final GetLabels getLabels;
+  final PrintLabels printLabels;
+  final DeleteLabel deleteLabel;
+
+  // Mantener estado local de etiquetas
+  List<Label> _labels = [];
 
   LabelsBloc({
     required this.getLabels,
@@ -16,9 +20,9 @@ class LabelsBloc extends Bloc<LabelsEvent, LabelsState> {
     required this.deleteLabel,
   }) : super(LabelsInitial()) {
     on<GetLabelsEvent>(_onGetLabels);
+    on<ToggleLabelSelectionEvent>(_onToggleLabelSelection);
     on<PrintLabelsEvent>(_onPrintLabels);
     on<DeleteLabelEvent>(_onDeleteLabel);
-    on<ToggleLabelSelectionEvent>(_onToggleLabelSelection);
   }
 
   Future<void> _onGetLabels(
@@ -27,39 +31,32 @@ class LabelsBloc extends Bloc<LabelsEvent, LabelsState> {
   ) async {
     emit(LabelsLoading());
 
-    // Implementación temporal hasta que tengamos el repositorio real
-    await Future.delayed(Duration(seconds: 1));
+    final result = await getLabels(NoParams());
 
-    // Para pruebas, creamos etiquetas ficticias
-    final mockProduct = Product(
-      id: '1',
-      reference: 'REF-001',
-      description: 'Producto de prueba',
-      barcode: '1234567890123',
-      location: 'A-01-02',
-      stock: 100.0,
-      unit: 'UND',
-      status: 'Activo',
-    );
+    result.fold((failure) => emit(LabelsError(failure.message)), (labels) {
+      _labels = labels;
+      if (labels.isEmpty) {
+        emit(LabelsEmpty());
+      } else {
+        emit(LabelsLoaded(labels));
+      }
+    });
+  }
 
-    final mockLabels = [
-      Label(
-        id: '1',
-        product: mockProduct,
-        createdAt: DateTime.now().toString(),
-      ),
-      Label(
-        id: '2',
-        product: mockProduct,
-        createdAt: DateTime.now().subtract(Duration(hours: 1)).toString(),
-      ),
-    ];
+  void _onToggleLabelSelection(
+    ToggleLabelSelectionEvent event,
+    Emitter<LabelsState> emit,
+  ) {
+    final updatedLabels =
+        _labels.map((label) {
+          if (label.id == event.labelId) {
+            return label.copyWith(selected: event.selected);
+          }
+          return label;
+        }).toList();
 
-    if (mockLabels.isEmpty) {
-      emit(LabelsEmpty());
-    } else {
-      emit(LabelsLoaded(mockLabels));
-    }
+    _labels = updatedLabels;
+    emit(LabelsLoaded(updatedLabels));
   }
 
   Future<void> _onPrintLabels(
@@ -68,14 +65,26 @@ class LabelsBloc extends Bloc<LabelsEvent, LabelsState> {
   ) async {
     emit(LabelsLoading());
 
-    // Implementación temporal
-    await Future.delayed(Duration(seconds: 1));
+    final result = await printLabels(
+      PrintLabelsParams(labelIds: event.labelIds),
+    );
 
-    // Simulamos una impresión exitosa
-    emit(LabelsPrintSuccess());
+    result.fold((failure) => emit(LabelsError(failure.message)), (
+      printedLabels,
+    ) {
+      // Actualizar etiquetas locales
+      final updatedLabels =
+          _labels.map((label) {
+            if (event.labelIds.contains(label.id)) {
+              return label.copyWith(printed: true, selected: false);
+            }
+            return label;
+          }).toList();
 
-    // Recargamos las etiquetas actualizadas
-    add(GetLabelsEvent());
+      _labels = updatedLabels;
+      emit(LabelsPrintSuccess(printedLabels));
+      emit(LabelsLoaded(updatedLabels));
+    });
   }
 
   Future<void> _onDeleteLabel(
@@ -84,34 +93,19 @@ class LabelsBloc extends Bloc<LabelsEvent, LabelsState> {
   ) async {
     emit(LabelsLoading());
 
-    // Implementación temporal
-    await Future.delayed(Duration(seconds: 1));
+    final result = await deleteLabel(DeleteLabelParams(labelId: event.labelId));
 
-    // Simulamos una eliminación exitosa
-    emit(LabelDeleteSuccess());
+    result.fold((failure) => emit(LabelsError(failure.message)), (_) {
+      // Eliminar etiqueta de la lista local
+      _labels.removeWhere((label) => label.id == event.labelId);
 
-    // Recargamos las etiquetas actualizadas
-    add(GetLabelsEvent());
-  }
+      emit(LabelDeleteSuccess(event.labelId));
 
-  Future<void> _onToggleLabelSelection(
-    ToggleLabelSelectionEvent event,
-    Emitter<LabelsState> emit,
-  ) async {
-    // Obtenemos el estado actual
-    if (state is LabelsLoaded) {
-      final currentLabels = (state as LabelsLoaded).labels;
-
-      // Actualizamos la selección de la etiqueta
-      final updatedLabels =
-          currentLabels.map((label) {
-            if (label.id == event.labelId) {
-              return label.copyWith(selected: event.selected);
-            }
-            return label;
-          }).toList();
-
-      emit(LabelsLoaded(updatedLabels));
-    }
+      if (_labels.isEmpty) {
+        emit(LabelsEmpty());
+      } else {
+        emit(LabelsLoaded(_labels));
+      }
+    });
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/themes/app_color.dart';
+import '../../../core/themes/app_colors.dart';
 
 class DeliveryNotePage extends StatelessWidget {
   const DeliveryNotePage({Key? key}) : super(key: key);

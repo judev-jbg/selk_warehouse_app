@@ -4,7 +4,7 @@ abstract class PlacementEvent extends Equatable {
   const PlacementEvent();
 
   @override
-  List<Object?> get props => [];
+  List<Object> get props => [];
 }
 
 class SearchProductEvent extends PlacementEvent {
@@ -13,7 +13,7 @@ class SearchProductEvent extends PlacementEvent {
   const SearchProductEvent({required this.barcode});
 
   @override
-  List<Object?> get props => [barcode];
+  List<Object> get props => [barcode];
 }
 
 class UpdateLocationEvent extends PlacementEvent {
@@ -26,7 +26,7 @@ class UpdateLocationEvent extends PlacementEvent {
   });
 
   @override
-  List<Object?> get props => [productId, newLocation];
+  List<Object> get props => [productId, newLocation];
 }
 
 class UpdateStockEvent extends PlacementEvent {
@@ -36,5 +36,7 @@ class UpdateStockEvent extends PlacementEvent {
   const UpdateStockEvent({required this.productId, required this.newStock});
 
   @override
-  List<Object?> get props => [productId, newStock];
+  List<Object> get props => [productId, newStock];
 }
+
+class ResetEvent extends PlacementEvent {}

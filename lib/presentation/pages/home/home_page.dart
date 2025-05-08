@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/themes/app_color.dart';
+import '../../../core/themes/app_colors.dart';
 import '../placement/placement_page.dart';
 import '../entry/entry_page.dart';
 import '../picking/picking_page.dart';

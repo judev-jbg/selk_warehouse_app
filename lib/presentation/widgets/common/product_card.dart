@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/themes/app_color.dart';
+import '../../../core/themes/app_colors.dart';
 import '../../../domain/entities/product.dart';
 
 class ProductCard extends StatelessWidget {
@@ -59,12 +59,14 @@ class ProductCard extends StatelessWidget {
               product.location,
               'location',
               showEditIcons && onFieldUpdate != null,
+              context,
             ),
             _buildEditableInfoItem(
               'Stock',
               '${product.stock} ${product.unit}',
               'stock',
               showEditIcons && onFieldUpdate != null,
+              context,
             ),
           ],
         ),
@@ -100,6 +102,7 @@ class ProductCard extends StatelessWidget {
     String value,
     String field,
     bool isEditable,
+    BuildContext context,
   ) {
     if (!isEditable) {
       return _buildInfoItem(label, value);
@@ -127,7 +130,7 @@ class ProductCard extends StatelessWidget {
             padding: EdgeInsets.zero,
             constraints: BoxConstraints(),
             onPressed: () {
-              _showEditDialog(label, value, field, onFieldUpdate!);
+              _showEditDialog(context, label, value, field, onFieldUpdate!);
             },
           ),
         ],
@@ -136,17 +139,22 @@ class ProductCard extends StatelessWidget {
   }
 
   void _showEditDialog(
+    BuildContext context,
     String label,
     String currentValue,
     String field,
     Function(String, String) onUpdate,
   ) {
+    // Extraer el valor numérico para el campo stock
+    final String initialValue =
+        field == 'stock' ? currentValue.split(' ')[0] : currentValue;
+
     final TextEditingController controller = TextEditingController(
-      text: field == 'stock' ? currentValue.split(' ')[0] : currentValue,
+      text: initialValue,
     );
 
     showDialog(
-      context: navigatorKey.currentContext!,
+      context: context,
       builder:
           (context) => AlertDialog(
             title: Text('Editar $label'),
@@ -192,6 +200,3 @@ class ProductCard extends StatelessWidget {
     return status.toUpperCase();
   }
 }
-
-// Para permitir mostrar diálogos desde cualquier lugar
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
