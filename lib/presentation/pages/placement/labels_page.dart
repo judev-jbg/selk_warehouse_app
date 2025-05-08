@@ -180,22 +180,22 @@ class _LabelsPageContent extends StatelessWidget {
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (dialogContext) => AlertDialog(
             title: Text('Eliminar Etiqueta'),
             content: Text(
               '¿Está seguro que desea eliminar la etiqueta para "${label.product.description}"?',
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(dialogContext).pop(),
                 child: Text('Cancelar'),
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  context.read<LabelsBloc>().add(
-                    DeleteLabelEvent(labelId: label.id),
-                  );
+                  Navigator.of(dialogContext).pop();
+                  BlocProvider.of<LabelsBloc>(
+                    context,
+                  ).add(DeleteLabelEvent(labelId: label.id));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.error,
