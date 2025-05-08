@@ -45,6 +45,7 @@ class _PlacementPageContent extends StatelessWidget {
       appBar: AppBar(
         title: Text('Colocación'),
         backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.surface,
       ),
       body: BlocConsumer<PlacementBloc, PlacementState>(
         listener: (context, state) {
@@ -91,12 +92,18 @@ class _PlacementPageContent extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.location_on),
+            label: 'Colocación',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.label), label: 'Etiquetas'),
           BottomNavigationBarItem(
             icon: Icon(Icons.logout),
             label: 'Cerrar Sesión',
           ),
         ],
+        enableFeedback: true,
+        currentIndex: 1,
         onTap: (index) {
           if (index == 0) {
             Navigator.of(context).pop();
