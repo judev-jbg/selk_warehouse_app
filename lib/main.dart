@@ -7,6 +7,10 @@ import 'presentation/bloc/auth/auth_state.dart';
 import 'presentation/pages/login/login_page.dart';
 import 'presentation/pages/home/home_page.dart';
 import 'domain/entities/user.dart';
+import 'mocks/core_mocks.dart';
+import 'package:provider/provider.dart';
+import 'core/network/websocket_service.dart';
+import 'domain/usecases/usecase.dart' as np;
 
 // Reemplazo temporal de la inyección de dependencias
 final authBloc = AuthBloc(
@@ -16,8 +20,11 @@ final authBloc = AuthBloc(
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  final webSocketService = MockWebSocketService();
   // No llamamos a init() por ahora
-  runApp(MyApp());
+  runApp(
+    Provider<WebSocketService>.value(value: webSocketService, child: MyApp()),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -64,7 +71,7 @@ class SimplifiedLoginUser {
 }
 
 class SimplifiedLogoutUser {
-  Future<Either<Failure, void>> call(NoParams params) async {
+  Future<Either<Failure, void>> call(np.NoParams params) async {
     await Future.delayed(Duration(seconds: 1));
     return Right(null);
   }

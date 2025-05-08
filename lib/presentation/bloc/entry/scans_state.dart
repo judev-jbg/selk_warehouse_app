@@ -23,6 +23,24 @@ class ScansLoaded extends ScansState {
 
 class ScansEmpty extends ScansState {}
 
+class ScanUpdateSuccess extends ScansState {
+  final Scan updatedScan;
+
+  const ScanUpdateSuccess(this.updatedScan);
+
+  @override
+  List<Object?> get props => [updatedScan];
+}
+
+class ScanDeleteSuccess extends ScansState {
+  final String scanId;
+
+  const ScanDeleteSuccess(this.scanId);
+
+  @override
+  List<Object?> get props => [scanId];
+}
+
 class ScansError extends ScansState {
   final String message;
 
@@ -31,14 +49,3 @@ class ScansError extends ScansState {
   @override
   List<Object?> get props => [message];
 }
-
-class ScanUpdateSuccess extends ScansState {
-  final Scan scan;
-
-  const ScanUpdateSuccess(this.scan);
-
-  @override
-  List<Object?> get props => [scan];
-}
-
-class ScanDeleteSuccess extends ScansState {}

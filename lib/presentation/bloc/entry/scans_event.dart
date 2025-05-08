@@ -4,7 +4,7 @@ abstract class ScansEvent extends Equatable {
   const ScansEvent();
 
   @override
-  List<Object?> get props => [];
+  List<Object> get props => [];
 }
 
 class GetScansEvent extends ScansEvent {}
@@ -16,7 +16,7 @@ class UpdateScanEvent extends ScansEvent {
   const UpdateScanEvent({required this.scanId, required this.newQuantity});
 
   @override
-  List<Object?> get props => [scanId, newQuantity];
+  List<Object> get props => [scanId, newQuantity];
 }
 
 class DeleteScanEvent extends ScansEvent {
@@ -25,5 +25,5 @@ class DeleteScanEvent extends ScansEvent {
   const DeleteScanEvent({required this.scanId});
 
   @override
-  List<Object?> get props => [scanId];
+  List<Object> get props => [scanId];
 }

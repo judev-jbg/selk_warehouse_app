@@ -34,7 +34,7 @@ class HomePage extends StatelessWidget {
       'Recogida',
       'Preparación de pedidos para salida',
       Icons.output,
-      PickingPage(),
+      PlacementPage(),
     ),
   ];
 

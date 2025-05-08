@@ -1,14 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../domain/entities/product.dart';
-import '../../../domain/entities/scan.dart';
+import '../../../domain/usecases/entry/get_scans.dart';
+import '../../../domain/usecases/entry/update_scan.dart';
+import '../../../domain/usecases/entry/delete_scan.dart';
+import '../../../domain/usecases/usecase.dart';
 import 'scans_event.dart';
 import 'scans_state.dart';
 
 class ScansBloc extends Bloc<ScansEvent, ScansState> {
-  // Temporalmente utiliza funciones vacías hasta que implementemos los casos de uso reales
-  final dynamic getScans;
-  final dynamic updateScan;
-  final dynamic deleteScan;
+  final GetScans getScans;
+  final UpdateScan updateScan;
+  final DeleteScan deleteScan;
 
   ScansBloc({
     required this.getScans,
@@ -26,42 +27,15 @@ class ScansBloc extends Bloc<ScansEvent, ScansState> {
   ) async {
     emit(ScansLoading());
 
-    // Implementación temporal hasta que tengamos el repositorio real
-    await Future.delayed(Duration(seconds: 1));
+    final result = await getScans(NoParams());
 
-    // Para pruebas, creamos escaneos ficticios
-    final mockProduct = Product(
-      id: '1',
-      reference: 'REF-001',
-      description: 'Producto de prueba',
-      barcode: '1234567890123',
-      location: 'A-01-02',
-      stock: 100.0,
-      unit: 'UND',
-      status: 'Activo',
-    );
-
-    final mockScans = [
-      Scan(
-        id: '1',
-        product: mockProduct,
-        quantity: 10,
-        createdAt: DateTime.now().toString(),
-      ),
-      Scan(
-        id: '2',
-        product: mockProduct,
-        quantity: 5,
-        createdAt: DateTime.now().subtract(Duration(hours: 1)).toString(),
-        supplierId: 'PROV-001',
-      ),
-    ];
-
-    if (mockScans.isEmpty) {
-      emit(ScansEmpty());
-    } else {
-      emit(ScansLoaded(mockScans));
-    }
+    result.fold((failure) => emit(ScansError(failure.message)), (scans) {
+      if (scans.isEmpty) {
+        emit(ScansEmpty());
+      } else {
+        emit(ScansLoaded(scans));
+      }
+    });
   }
 
   Future<void> _onUpdateScan(
@@ -70,32 +44,14 @@ class ScansBloc extends Bloc<ScansEvent, ScansState> {
   ) async {
     emit(ScansLoading());
 
-    // Implementación temporal
-    await Future.delayed(Duration(seconds: 1));
-
-    // Simulamos una actualización exitosa
-    final mockProduct = Product(
-      id: '1',
-      reference: 'REF-001',
-      description: 'Producto de prueba',
-      barcode: '1234567890123',
-      location: 'A-01-02',
-      stock: 100.0,
-      unit: 'UND',
-      status: 'Activo',
+    final result = await updateScan(
+      UpdateScanParams(scanId: event.scanId, newQuantity: event.newQuantity),
     );
 
-    final updatedScan = Scan(
-      id: event.scanId,
-      product: mockProduct,
-      quantity: event.newQuantity,
-      createdAt: DateTime.now().toString(),
-    );
-
-    emit(ScanUpdateSuccess(updatedScan));
-
-    // Recargamos la lista actualizada
-    add(GetScansEvent());
+    result.fold((failure) => emit(ScansError(failure.message)), (updatedScan) {
+      emit(ScanUpdateSuccess(updatedScan));
+      add(GetScansEvent()); // Recargar la lista de lecturas
+    });
   }
 
   Future<void> _onDeleteScan(
@@ -104,13 +60,11 @@ class ScansBloc extends Bloc<ScansEvent, ScansState> {
   ) async {
     emit(ScansLoading());
 
-    // Implementación temporal
-    await Future.delayed(Duration(seconds: 1));
+    final result = await deleteScan(DeleteScanParams(scanId: event.scanId));
 
-    // Simulamos una eliminación exitosa
-    emit(ScanDeleteSuccess());
-
-    // Recargamos la lista actualizada
-    add(GetScansEvent());
+    result.fold((failure) => emit(ScansError(failure.message)), (_) {
+      emit(ScanDeleteSuccess(event.scanId));
+      add(GetScansEvent()); // Recargar la lista de lecturas
+    });
   }
 }

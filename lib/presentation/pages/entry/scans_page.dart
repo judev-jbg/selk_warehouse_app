@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/themes/app_colors.dart';
 import '../../../domain/entities/scan.dart';
+import '../../../mocks/entry_mocks.dart' as em;
 import '../../bloc/entry/scans_bloc.dart';
 import '../../bloc/entry/scans_event.dart';
 import '../../bloc/entry/scans_state.dart';
 import 'delivery_note_page.dart';
+
+// Para pruebas
+import 'package:dartz/dartz.dart';
+import '../../../domain/entities/product.dart';
+import '../../../domain/entities/supplier.dart';
 
 class ScansPage extends StatelessWidget {
   const ScansPage({Key? key}) : super(key: key);
@@ -15,90 +21,94 @@ class ScansPage extends StatelessWidget {
     return BlocProvider(
       create:
           (context) => ScansBloc(
-            getScans: context.read(),
-            updateScan: context.read(),
-            deleteScan: context.read(),
+            getScans: em.MockGetScans(),
+            updateScan: em.MockUpdateScan(),
+            deleteScan: em.MockDeleteScan(),
           )..add(GetScansEvent()),
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Lecturas Registradas'),
-          backgroundColor: AppColors.primary,
-        ),
-        body: BlocConsumer<ScansBloc, ScansState>(
-          listener: (context, state) {
-            if (state is ScansError) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
-            } else if (state is ScanUpdateSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Lectura actualizada correctamente'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            } else if (state is ScanDeleteSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Lectura eliminada correctamente'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            }
-          },
-          builder: (context, state) {
-            if (state is ScansLoading) {
-              return Center(child: CircularProgressIndicator());
-            } else if (state is ScansLoaded) {
-              return _buildScansList(context, state.scans);
-            } else if (state is ScansEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.search_off, size: 64, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text(
-                      'No hay lecturas registradas',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Escanee productos en la pantalla de Entrada',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              );
-            }
+      child: _ScansPageContent(),
+    );
+  }
+}
 
-            return Container();
-          },
-        ),
-        bottomNavigationBar: BlocBuilder<ScansBloc, ScansState>(
-          builder: (context, state) {
-            if (state is ScansLoaded && state.scans.isNotEmpty) {
-              return Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => DeliveryNotePage()),
-                    );
-                  },
-                  child: Text('Generar Albarán'),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
+class _ScansPageContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Lecturas Registradas'),
+        backgroundColor: AppColors.primary,
+      ),
+      body: BlocConsumer<ScansBloc, ScansState>(
+        listener: (context, state) {
+          if (state is ScansError) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
+          } else if (state is ScanUpdateSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Lectura actualizada correctamente'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          } else if (state is ScanDeleteSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Lectura eliminada correctamente'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          if (state is ScansLoading) {
+            return Center(child: CircularProgressIndicator());
+          } else if (state is ScansLoaded) {
+            return _buildScansList(context, state.scans);
+          } else if (state is ScansEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'No hay lecturas registradas',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Escanee productos en la pantalla de Entrada',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Container();
+        },
+      ),
+      bottomNavigationBar: BlocBuilder<ScansBloc, ScansState>(
+        builder: (context, state) {
+          if (state is ScansLoaded && state.scans.isNotEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => DeliveryNotePage()));
+                },
+                child: Text('Generar Albarán'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16),
                 ),
-              );
-            }
-            return SizedBox(height: 0);
-          },
-        ),
+              ),
+            );
+          }
+          return SizedBox(height: 0);
+        },
       ),
     );
   }
@@ -123,9 +133,9 @@ class ScansPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Ref: ${scan.product.reference}'),
-                Text('Cantidad: ${scan.quantity}'),
-                if (scan.supplierId != null)
-                  Text('Proveedor: ${scan.supplierId}'),
+                Text('Cantidad: ${scan.quantity} ${scan.product.unit}'),
+                if (scan.supplier != null)
+                  Text('Proveedor: ${scan.supplier!.name}'),
               ],
             ),
             trailing: Row(
@@ -160,7 +170,7 @@ class ScansPage extends StatelessWidget {
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (dialogContext) => AlertDialog(
             title: Text('Editar Cantidad'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -184,18 +194,21 @@ class ScansPage extends StatelessWidget {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: Text('Cancelar'),
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
-                  context.read<ScansBloc>().add(
-                    UpdateScanEvent(
-                      scanId: scan.id,
-                      newQuantity: double.tryParse(controller.text) ?? 0,
-                    ),
-                  );
+                  Navigator.pop(dialogContext);
+                  final newQuantity = double.tryParse(controller.text) ?? 0;
+                  if (newQuantity > 0) {
+                    context.read<ScansBloc>().add(
+                      UpdateScanEvent(
+                        scanId: scan.id,
+                        newQuantity: newQuantity,
+                      ),
+                    );
+                  }
                 },
                 child: Text('Guardar'),
               ),
@@ -208,17 +221,17 @@ class ScansPage extends StatelessWidget {
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
+          (dialogContext) => AlertDialog(
             title: Text('Eliminar Lectura'),
             content: Text('¿Está seguro que desea eliminar esta lectura?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: Text('Cancelar'),
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pop(dialogContext);
                   context.read<ScansBloc>().add(
                     DeleteScanEvent(scanId: scan.id),
                   );
@@ -232,4 +245,23 @@ class ScansPage extends StatelessWidget {
           ),
     );
   }
+}
+
+class UpdateScanParams {
+  final String scanId;
+  final double newQuantity;
+
+  UpdateScanParams({required this.scanId, required this.newQuantity});
+}
+
+class DeleteScanParams {
+  final String scanId;
+
+  DeleteScanParams({required this.scanId});
+}
+
+class Failure {
+  final String message;
+
+  Failure(this.message);
 }
