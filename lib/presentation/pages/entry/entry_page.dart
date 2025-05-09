@@ -44,8 +44,9 @@ class _EntryPageContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Entrada (Picking)'),
+        title: Text('Entrada'),
         backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.surface,
         actions: [
           IconButton(
             icon: Icon(Icons.search),
