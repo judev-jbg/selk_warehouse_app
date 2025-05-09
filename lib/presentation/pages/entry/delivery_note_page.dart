@@ -79,13 +79,11 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSupplierSelector(context, state),
-                  SizedBox(height: 24),
                   TextField(
                     controller: _referenceController,
                     decoration: InputDecoration(
-                      labelText: 'Referencia de albarán del proveedor',
-                      hintText: 'Ingrese el número de albarán del proveedor',
+                      labelText: 'Albarán del proveedor',
+                      hintText: 'Ingrese el albarán del proveedor',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -224,10 +222,10 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
 
   void _generateDeliveryNote(BuildContext context) {
     // Verificar que tenemos toda la información necesaria
-    if (_selectedSupplier == null || _referenceController.text.isEmpty) {
+    if (_referenceController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Por favor, complete todos los campos'),
+          content: Text('Por favor, ingrese el albarán del proveedor'),
           backgroundColor: AppColors.error,
         ),
       );

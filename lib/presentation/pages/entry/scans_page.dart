@@ -169,51 +169,68 @@ class _ScansPageContent extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder:
-          (dialogContext) => AlertDialog(
-            title: Text('Editar Cantidad'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  scan.product.description,
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 16),
-                TextField(
-                  controller: controller,
-                  decoration: InputDecoration(
-                    labelText: 'Cantidad',
-                    border: OutlineInputBorder(),
+      builder: (dialogContext) {
+        bool valueChanged = false;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Editar Cantidad'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    scan.product.description,
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  keyboardType: TextInputType.number,
-                  autofocus: true,
+                  SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    decoration: InputDecoration(
+                      labelText: 'Cantidad',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    autofocus: true,
+                    onChanged: (value) {
+                      final newQuantity = double.tryParse(value) ?? 0;
+                      setState(() {
+                        valueChanged = newQuantity != scan.quantity;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed:
+                      valueChanged
+                          ? () {
+                            Navigator.pop(dialogContext);
+                            final newQuantity =
+                                double.tryParse(controller.text) ?? 0;
+                            if (newQuantity > 0) {
+                              context.read<ScansBloc>().add(
+                                UpdateScanEvent(
+                                  scanId: scan.id,
+                                  newQuantity: newQuantity,
+                                ),
+                              );
+                            }
+                          }
+                          : null,
+                  child: Text('Guardar'),
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: Text('Cancelar'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  final newQuantity = double.tryParse(controller.text) ?? 0;
-                  if (newQuantity > 0) {
-                    context.read<ScansBloc>().add(
-                      UpdateScanEvent(
-                        scanId: scan.id,
-                        newQuantity: newQuantity,
-                      ),
-                    );
-                  }
-                },
-                child: Text('Guardar'),
-              ),
-            ],
-          ),
+            );
+          },
+        );
+      },
     );
   }
 

@@ -127,6 +127,7 @@ class _EntryPageContent extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context, EntryState state) {
+    print('Estado de la lectura: ${state}');
     if (state is ProductScanned) {
       return Center(
         child: Column(
@@ -382,7 +383,6 @@ class _EntryPageContent extends StatelessWidget {
         ),
       );
     }
-
     return Container();
   }
 

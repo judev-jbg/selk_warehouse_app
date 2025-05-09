@@ -6,14 +6,21 @@ import '../../bloc/entry/entry_bloc.dart';
 import '../../bloc/entry/entry_event.dart';
 import '../../bloc/entry/entry_state.dart';
 import '../../widgets/common/loading_overlay.dart';
+import '../../../mocks/entry_mocks.dart';
+import '../../../core/network/websocket_service.dart';
 
 class SpecialProductsPage extends StatelessWidget {
   const SpecialProductsPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: BlocProvider.of<EntryBloc>(context),
+    return BlocProvider(
+      create:
+          (context) => EntryBloc(
+            scanProduct: MockScanProduct(),
+            getScans: MockGetScans(),
+            webSocketService: context.read<WebSocketService>(),
+          ),
       child: _SpecialProductsPageContent(),
     );
   }

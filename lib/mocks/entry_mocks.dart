@@ -160,6 +160,36 @@ class MockScanProduct implements ScanProduct {
       unit: 'unidades',
       status: 'Activo',
     ),
+    '7898422746760': Product(
+      id: '2',
+      reference: '5810  493258E',
+      description: 'Tornillo hexagonal M10x60',
+      barcode: '7898422746760',
+      location: 'A103',
+      stock: 85.0,
+      unit: 'unidades',
+      status: 'Activo',
+    ),
+    '7898422746761': Product(
+      id: '3',
+      reference: '9999  503',
+      description: 'Tornillo especial zincado',
+      barcode: '7898422746761',
+      location: 'B201',
+      stock: 42.0,
+      unit: 'unidades',
+      status: 'Activo',
+    ),
+    '7898422746762': Product(
+      id: '4',
+      reference: '6021  983456E',
+      description: 'Tuerca hexagonal M10',
+      barcode: '7898422746762',
+      location: 'A205',
+      stock: 230.0,
+      unit: 'unidades',
+      status: 'Activo',
+    ),
     // ... resto de los productos
   };
 
@@ -221,7 +251,7 @@ class MockGetScans implements GetScans {
   @override
   EntryRepository get repository => _mockRepo;
 
-  final _scans = <Scan>[];
+  static final _scans = <Scan>[];
   final _uuid = Uuid();
 
   MockGetScans() {
@@ -299,28 +329,22 @@ class MockUpdateScan implements UpdateScan {
     await Future.delayed(Duration(seconds: 1)); // Simular latencia
 
     // Crear una copia actualizada de la lectura
-    final updatedScan = Scan(
-      id: params.scanId,
-      product: Product(
-        id: '1',
-        reference: '5808  493256E',
-        description: 'Tornillo hexagonal M8x40',
-        barcode: '7898422746759',
-        location: 'A102',
-        stock: 120.0,
-        unit: 'unidades',
-        status: 'Activo',
-      ),
-      quantity: params.newQuantity,
-      createdAt: '2025-05-08T10:30:00',
-      supplier: Supplier(
-        id: '1',
-        name: 'Proveedor Ejemplo S.L.',
-        code: 'PROV001',
-      ),
+    final index = MockGetScans._scans.indexWhere(
+      (scan) => scan.id == params.scanId,
     );
 
-    return Right(updatedScan);
+    if (index != -1) {
+      // Crear una versión actualizada del scan
+      final updatedScan = MockGetScans._scans[index].copyWith(
+        quantity: params.newQuantity,
+      );
+
+      // Reemplazar el scan en la lista
+      MockGetScans._scans[index] = updatedScan;
+
+      return Right(updatedScan);
+    }
+    throw "Scan no encontrado";
   }
 }
 
@@ -334,6 +358,7 @@ class MockDeleteScan implements DeleteScan {
   @override
   Future<Either<Failure, void>> call(DeleteScanParams params) async {
     await Future.delayed(Duration(seconds: 1)); // Simular latencia
+    MockGetScans._scans.removeWhere((scan) => scan.id == params.scanId);
     return Right(null);
   }
 }
