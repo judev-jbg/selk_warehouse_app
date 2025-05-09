@@ -7,7 +7,7 @@ import 'presentation/bloc/auth/auth_state.dart';
 import 'presentation/pages/login/login_page.dart';
 import 'presentation/pages/home/home_page.dart';
 import 'domain/entities/user.dart';
-import 'mocks/core_mocks.dart';
+import 'mocks/core_mocks.dart' as ck;
 import 'package:provider/provider.dart';
 import 'core/network/websocket_service.dart';
 import 'domain/usecases/usecase.dart' as np;

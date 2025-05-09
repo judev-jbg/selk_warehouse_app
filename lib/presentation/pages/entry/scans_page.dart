@@ -37,6 +37,7 @@ class _ScansPageContent extends StatelessWidget {
       appBar: AppBar(
         title: Text('Lecturas Registradas'),
         backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.surface,
       ),
       body: BlocConsumer<ScansBloc, ScansState>(
         listener: (context, state) {

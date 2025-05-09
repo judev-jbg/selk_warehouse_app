@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:selk_warehouse_app/domain/usecases/entry/generate_delivery_note.dart';
+import 'package:selk_warehouse_app/domain/usecases/entry/get_suppliers.dart';
+import 'package:selk_warehouse_app/injection_container.dart';
 import '../../../core/themes/app_colors.dart';
-import '../../../domain/entities/supplier.dart';
-import '../../../mocks/entry_mocks.dart' as em;
 import '../../bloc/entry/delivery_note_bloc.dart';
 import '../../bloc/entry/delivery_note_event.dart';
 import '../../bloc/entry/delivery_note_state.dart';
 import '../../widgets/common/loading_overlay.dart';
-
-// Para pruebas
-import 'package:dartz/dartz.dart' as dz;
-import '../../../domain/entities/scan.dart';
-import '../../../domain/entities/delivery_note.dart';
-import '../../../domain/entities/product.dart';
+import '../../../mocks/entry_mocks.dart';
 
 class DeliveryNotePage extends StatelessWidget {
   const DeliveryNotePage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create:
-          (context) => DeliveryNoteBloc(
-            getAllSuppliers: em.MockGetAllSuppliers(),
-            generateDeliveryNote: em.MockGenerateDeliveryNote(),
-          )..add(GetSuppliersEvent()),
+    // Crear una nueva instancia del bloc con mocks concretos
+    final deliveryNoteBloc = DeliveryNoteBloc(
+      getAllSuppliers: MockGetAllSuppliers(), // Instancia directa del mock
+      generateDeliveryNote:
+          MockGenerateDeliveryNote(), // Instancia directa del mock
+    );
+
+    // Añadir el evento inicial
+    deliveryNoteBloc.add(GetSuppliersEvent());
+
+    return BlocProvider<DeliveryNoteBloc>.value(
+      value: deliveryNoteBloc, // Usar el bloc ya creado
       child: _DeliveryNotePageContent(),
     );
   }
@@ -38,7 +40,6 @@ class _DeliveryNotePageContent extends StatefulWidget {
 
 class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
   final _referenceController = TextEditingController();
-  Supplier? _selectedSupplier;
 
   @override
   void dispose() {
@@ -52,6 +53,7 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
       appBar: AppBar(
         title: Text('Generar Albarán'),
         backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.surface,
       ),
       body: BlocConsumer<DeliveryNoteBloc, DeliveryNoteState>(
         listener: (context, state) {
@@ -79,11 +81,16 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    'Ingrese la referencia de albarán del proveedor',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 16),
                   TextField(
                     controller: _referenceController,
                     decoration: InputDecoration(
-                      labelText: 'Albarán del proveedor',
-                      hintText: 'Ingrese el albarán del proveedor',
+                      labelText: 'Referencia de albarán del proveedor',
+                      hintText: 'Ingrese el número de albarán del proveedor',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -94,7 +101,7 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed:
-                          _canGenerateDeliveryNote(state)
+                          _referenceController.text.isNotEmpty
                               ? () => _generateDeliveryNote(context)
                               : null,
                       child: Text('Generar Albarán'),
@@ -110,50 +117,6 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
         },
       ),
     );
-  }
-
-  Widget _buildSupplierSelector(BuildContext context, DeliveryNoteState state) {
-    if (state is SuppliersLoaded) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Seleccione un proveedor',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          DropdownButtonFormField<Supplier>(
-            decoration: InputDecoration(
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
-            ),
-            value: _selectedSupplier,
-            hint: Text('Seleccione un proveedor'),
-            items:
-                state.suppliers.map((supplier) {
-                  return DropdownMenuItem(
-                    value: supplier,
-                    child: Text(supplier.name),
-                  );
-                }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedSupplier = value;
-              });
-
-              context.read<DeliveryNoteBloc>().add(
-                SelectSupplierEvent(supplierId: value!.id),
-              );
-            },
-          ),
-        ],
-      );
-    }
-
-    return Container();
   }
 
   Widget _buildProductList(BuildContext context, DeliveryNoteState state) {
@@ -213,19 +176,11 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
     return Container();
   }
 
-  bool _canGenerateDeliveryNote(DeliveryNoteState state) {
-    return state is ScansForDeliveryNoteLoaded &&
-        state.scans.isNotEmpty &&
-        _selectedSupplier != null &&
-        _referenceController.text.isNotEmpty;
-  }
-
   void _generateDeliveryNote(BuildContext context) {
-    // Verificar que tenemos toda la información necesaria
     if (_referenceController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Por favor, ingrese el albarán del proveedor'),
+          content: Text('Por favor, ingrese la referencia del albarán'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -237,20 +192,4 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
       GenerateDeliveryNoteEvent(supplierReference: _referenceController.text),
     );
   }
-}
-
-class GenerateDeliveryNoteParams {
-  final String supplierReference;
-  final List<String> scanIds;
-
-  GenerateDeliveryNoteParams({
-    required this.supplierReference,
-    required this.scanIds,
-  });
-}
-
-class Failure {
-  final String message;
-
-  Failure(this.message);
 }

@@ -1,6 +1,10 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'package:selk_warehouse_app/domain/repositories/entry_repository.dart';
+import 'package:selk_warehouse_app/domain/usecases/entry/generate_delivery_note.dart';
+import 'package:selk_warehouse_app/domain/usecases/entry/get_suppliers.dart';
+import 'package:selk_warehouse_app/mocks/entry_mocks.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -36,6 +40,13 @@ Future<void> init() async {
     ),
   );
 
+  // Registrar los casos de uso
+  sl.registerLazySingleton(() => GetAllSuppliers(sl()));
+  sl.registerLazySingleton(() => GenerateDeliveryNote(sl()));
+
+  // Registrar los repositorios
+  sl.registerLazySingleton<EntryRepository>(() => MockEntryRepository());
+
   // Data sources
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(client: sl()),
@@ -48,7 +59,7 @@ Future<void> init() async {
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
   sl.registerLazySingleton(() => ApiClient(sl(), sl()));
   sl.registerLazySingleton(() => SunmiScannerService());
-  sl.registerLazySingleton(() => WebSocketService());
+  sl.registerLazySingleton(() => MockWebSocketService());
 
   //! External
   final sharedPreferences = await SharedPreferences.getInstance();
