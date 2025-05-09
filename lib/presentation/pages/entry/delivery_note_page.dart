@@ -82,14 +82,14 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Ingrese la referencia de albarán del proveedor',
+                    'Ingrese el albarán del proveedor',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 16),
                   TextField(
                     controller: _referenceController,
                     decoration: InputDecoration(
-                      labelText: 'Referencia de albarán del proveedor',
+                      labelText: 'Albarán del proveedor',
                       hintText: 'Ingrese el número de albarán del proveedor',
                       border: OutlineInputBorder(),
                     ),
@@ -99,15 +99,20 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
                   SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed:
-                          _referenceController.text.isNotEmpty
-                              ? () => _generateDeliveryNote(context)
-                              : null,
-                      child: Text('Generar Albarán'),
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                      ),
+                    child: ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _referenceController,
+                      builder: (context, value, child) {
+                        return ElevatedButton(
+                          onPressed:
+                              value.text.isEmpty
+                                  ? null
+                                  : () => _generateDeliveryNote(context),
+                          child: Text('Generar Albarán'),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -180,7 +185,7 @@ class _DeliveryNotePageContentState extends State<_DeliveryNotePageContent> {
     if (_referenceController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Por favor, ingrese la referencia del albarán'),
+          content: Text('Por favor, ingrese el albarán del proveedor'),
           backgroundColor: AppColors.error,
         ),
       );
