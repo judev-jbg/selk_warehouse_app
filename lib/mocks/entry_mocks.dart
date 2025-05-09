@@ -211,7 +211,7 @@ class MockScanProduct implements ScanProduct {
     if (product == null) {
       return Left(
         ProductNotFoundFailure(
-          'No se encontró ningún producto con el código ${params.barcode}',
+          'No se encontró ningún articulo con el código ${params.barcode}',
         ),
       );
     }
@@ -220,7 +220,7 @@ class MockScanProduct implements ScanProduct {
     if (!_orderedProducts.contains(params.barcode)) {
       return Left(
         ProductNotOrderedFailure(
-          message: 'El producto no está en ningún pedido pendiente',
+          message: 'El artículo no está en ningún pedido pendiente',
           product: product,
         ),
       );

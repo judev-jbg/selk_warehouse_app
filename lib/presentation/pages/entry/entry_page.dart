@@ -223,7 +223,7 @@ class _EntryPageContent extends StatelessWidget {
             ),
             SizedBox(height: 16),
             Text(
-              'Producto no encontrado',
+              'Articulo no encontrado',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
@@ -254,7 +254,7 @@ class _EntryPageContent extends StatelessWidget {
                 );
               },
               icon: Icon(Icons.search),
-              label: Text('Buscar producto especial (9999)'),
+              label: Text('Buscar producto (9999)'),
             ),
           ],
         ),
@@ -273,13 +273,13 @@ class _EntryPageContent extends StatelessWidget {
               ),
               child: Icon(
                 Icons.warning_amber,
-                size: 48,
+                size: 40,
                 color: AppColors.warning,
               ),
             ),
             SizedBox(height: 16),
             Text(
-              'Producto no pedido',
+              'Articulo no pedido',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
@@ -326,7 +326,7 @@ class _EntryPageContent extends StatelessWidget {
                     _showConfirmDialog(context, state.product);
                   },
                   icon: Icon(Icons.add_circle),
-                  label: Text('Registrar igual'),
+                  label: Text('Agregar'),
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     backgroundColor: AppColors.warning,
@@ -393,13 +393,13 @@ class _EntryPageContent extends StatelessWidget {
       context: context,
       builder:
           (dialogContext) => AlertDialog(
-            title: Text('Registrar producto no pedido'),
+            title: Text('Agreagar articulo no pedido'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Está registrando un producto que no está en ningún pedido pendiente.',
+                  'Está agregando un articulo que no está en ningún pedido pendiente.',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.warning,
