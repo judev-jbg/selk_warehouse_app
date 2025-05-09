@@ -6,6 +6,8 @@ import '../../../domain/entities/product.dart';
 import '../../../core/network/websocket_service.dart';
 import '../../../core/errors/failures.dart';
 import '../../../domain/entities/scan.dart';
+import '../../../mocks/core_mocks.dart';
+import '../../../domain/usecases/usecase.dart' as np;
 import 'entry_event.dart';
 import 'entry_state.dart';
 
@@ -63,9 +65,20 @@ class EntryBloc extends Bloc<EntryEvent, EntryState> {
       (failure) {
         if (failure is ProductNotFoundFailure) {
           emit(ProductNotFound(failure.message));
-        } else if (failure is ProductNotOrderedFailure) {
-          final product = failure.product as Product;
-          emit(ProductNotOrdered(product: product, message: failure.message));
+        } else if (failure.message.contains('no está en ningún pedido')) {
+          // Verificar por mensaje en lugar de tipo
+          final product =
+              failure.runtimeType.toString().contains(
+                    'ProductNotOrderedFailure',
+                  )
+                  ? (failure as dynamic).product as Product
+                  : null;
+
+          if (product != null) {
+            emit(ProductNotOrdered(product: product, message: failure.message));
+          } else {
+            emit(EntryError(failure.message));
+          }
         } else {
           emit(EntryError(failure.message));
         }
@@ -89,7 +102,7 @@ class EntryBloc extends Bloc<EntryEvent, EntryState> {
   ) async {
     emit(EntryLoading());
 
-    final result = await getScans(NoParams());
+    final result = await getScans(np.NoParams());
 
     result.fold(
       (failure) => emit(EntryError(failure.message)),
@@ -201,16 +214,4 @@ class EntryBloc extends Bloc<EntryEvent, EntryState> {
       ),
     );
   }
-}
-
-// Clases de fallo específicas
-class ProductNotFoundFailure extends Failure {
-  ProductNotFoundFailure(String message) : super(message);
-}
-
-class ProductNotOrderedFailure extends Failure {
-  final Product? product; // Propiedad explícitamente definida
-
-  ProductNotOrderedFailure({required String message, this.product})
-    : super(message);
 }
