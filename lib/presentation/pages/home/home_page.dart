@@ -66,6 +66,7 @@ class HomePage extends StatelessWidget {
               fontSize: 34,
               fontWeight: FontWeight.bold,
               fontFamily: 'Roboto',
+              color: AppColors.onBackground,
             ),
           ),
           Expanded(
@@ -75,6 +76,7 @@ class HomePage extends StatelessWidget {
                 final item = menuItems[index];
                 return _buildMenuItem(context, item);
               },
+              padding: EdgeInsets.only(top: 10),
             ),
           ),
           Padding(
@@ -148,11 +150,16 @@ class HomePage extends StatelessWidget {
                           fontSize: 25,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Roboto',
+                          color: AppColors.onBackground,
                         ),
                       ),
                       Text(
                         item.description,
-                        style: TextStyle(fontSize: 16, fontFamily: 'Roboto'),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontFamily: 'Roboto',
+                          color: AppColors.onBackground,
+                        ),
                       ),
                     ],
                   ),

@@ -20,6 +20,7 @@ class AppColors {
 
   // Tonos neutros
   static const Color background = Color(0xFFF5F5F5);
+  static const Color onBackground = Color(0xFF5E5E5E);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color onSurface = Color(0xFF212121);
   static const Color divider = Color(0xFFBDBDBD);

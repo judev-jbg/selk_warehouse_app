@@ -70,7 +70,7 @@ class DeliveryNoteBloc extends Bloc<DeliveryNoteEvent, DeliveryNoteState> {
     GenerateDeliveryNoteEvent event,
     Emitter<DeliveryNoteState> emit,
   ) async {
-    if (_selectedSupplierId == null || _scans.isEmpty) {
+    if (_scans.isEmpty) {
       emit(DeliveryNoteError('No hay lecturas para generar albarán'));
       return;
     }
