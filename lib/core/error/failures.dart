@@ -1,38 +1,39 @@
-// lib/core/error/exceptions.dart
-/// Excepción base de la aplicación
-abstract class AppException implements Exception {
+// lib/core/error/failures.dart
+import 'package:equatable/equatable.dart';
+
+/// Fallo base de la aplicación
+abstract class Failure extends Equatable {
   final String message;
   final String? code;
 
-  const AppException(this.message, [this.code]);
+  const Failure(this.message, [this.code]);
 
   @override
-  String toString() =>
-      'AppException: $message${code != null ? ' (Code: $code)' : ''}';
+  List<Object?> get props => [message, code];
 }
 
-/// Excepción de servidor
-class ServerException extends AppException {
-  const ServerException(String message, [String? code]) : super(message, code);
+/// Fallo de servidor
+class ServerFailure extends Failure {
+  const ServerFailure(String message, [String? code]) : super(message, code);
 }
 
-/// Excepción de caché/almacenamiento local
-class CacheException extends AppException {
-  const CacheException(String message, [String? code]) : super(message, code);
+/// Fallo de caché
+class CacheFailure extends Failure {
+  const CacheFailure(String message, [String? code]) : super(message, code);
 }
 
-/// Excepción de red
-class NetworkException extends AppException {
-  const NetworkException(String message, [String? code]) : super(message, code);
+/// Fallo de red
+class NetworkFailure extends Failure {
+  const NetworkFailure(String message, [String? code]) : super(message, code);
 }
 
-/// Excepción de autenticación
-class AuthException extends AppException {
-  const AuthException(String message, [String? code]) : super(message, code);
+/// Fallo de autenticación
+class AuthFailure extends Failure {
+  const AuthFailure(String message, [String? code]) : super(message, code);
 }
 
-/// Excepción de validación
-class ValidationException extends AppException {
-  const ValidationException(String message, [String? code])
+/// Fallo de validación
+class ValidationFailure extends Failure {
+  const ValidationFailure(String message, [String? code])
       : super(message, code);
 }

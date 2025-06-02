@@ -1,22 +1,34 @@
+// lib/features/auth/domain/repositories/auth_repository.dart
 import 'package:dartz/dartz.dart';
-import '../entities/user.dart';
 import '../../../../core/error/failures.dart';
+import '../entities/login_request.dart';
+import '../entities/login_response.dart';
+import '../entities/user.dart';
 
 abstract class AuthRepository {
-  /// Inicia sesión con las credenciales proporcionadas
-  ///
-  /// Retorna un [User] si la autenticación es exitosa
-  /// o un [Failure] si ocurre un error
-  Future<Either<Failure, User>> login(String username, String password);
+  /// Iniciar sesión con credenciales
+  Future<Either<Failure, LoginResponse>> login(LoginRequest request);
 
-  /// Cierra la sesión del usuario actual
-  ///
-  /// Retorna void si es exitoso o un [Failure] si ocurre un error
+  /// Refrescar token de acceso
+  Future<Either<Failure, String>> refreshToken(
+      String refreshToken, String deviceId);
+
+  /// Cerrar sesión
   Future<Either<Failure, void>> logout();
 
-  /// Verifica si hay un usuario autenticado actualmente
-  ///
-  /// Retorna un [User] si hay un usuario autenticado
-  /// o un [Failure] si no hay sesión o ocurre un error
-  Future<Either<Failure, User>> checkAuthStatus();
+  /// Obtener usuario desde caché
+  Future<Either<Failure, User>> getCachedUser();
+
+  /// Verificar si hay sesión válida
+  Future<bool> hasValidSession();
+
+  /// Limpiar datos de sesión
+  Future<Either<Failure, void>> clearSession();
+
+  /// Verificar si el token necesita renovación
+  Future<bool> shouldRefreshToken();
+
+  /// Obtener logs de auditoría del usuario
+  Future<Either<Failure, List<Map<String, dynamic>>>> getAuditLogs(
+      {int limit = 50});
 }
