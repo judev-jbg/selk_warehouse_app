@@ -1,41 +1,38 @@
-import 'package:equatable/equatable.dart';
-
-/// Clase base para los fallos en la aplicación
-abstract class Failure extends Equatable {
+// lib/core/error/exceptions.dart
+/// Excepción base de la aplicación
+abstract class AppException implements Exception {
   final String message;
+  final String? code;
 
-  const Failure(this.message);
+  const AppException(this.message, [this.code]);
 
   @override
-  List<Object> get props => [message];
+  String toString() =>
+      'AppException: $message${code != null ? ' (Code: $code)' : ''}';
 }
 
-/// Fallo específico para errores de servidor
-class ServerFailure extends Failure {
-  const ServerFailure(String message) : super(message);
+/// Excepción de servidor
+class ServerException extends AppException {
+  const ServerException(String message, [String? code]) : super(message, code);
 }
 
-/// Fallo específico para errores de caché
-class CacheFailure extends Failure {
-  const CacheFailure(String message) : super(message);
+/// Excepción de caché/almacenamiento local
+class CacheException extends AppException {
+  const CacheException(String message, [String? code]) : super(message, code);
 }
 
-/// Fallo específico para errores de red
-class NetworkFailure extends Failure {
-  const NetworkFailure(String message) : super(message);
+/// Excepción de red
+class NetworkException extends AppException {
+  const NetworkException(String message, [String? code]) : super(message, code);
 }
 
-/// Fallo específico para errores de autenticación
-class AuthFailure extends Failure {
-  const AuthFailure(String message) : super(message);
+/// Excepción de autenticación
+class AuthException extends AppException {
+  const AuthException(String message, [String? code]) : super(message, code);
 }
 
-/// Fallo específico para errores inesperados
-class UnexpectedFailure extends Failure {
-  const UnexpectedFailure(String message) : super(message);
-}
-
-/// Fallo específico para errores de dispositivo (escáner, impresora)
-class DeviceFailure extends Failure {
-  const DeviceFailure(String message) : super(message);
+/// Excepción de validación
+class ValidationException extends AppException {
+  const ValidationException(String message, [String? code])
+      : super(message, code);
 }

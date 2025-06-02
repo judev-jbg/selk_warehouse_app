@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import '../constants/api_constants.dart';
-import '../constants/storage_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Cliente API que maneja las peticiones HTTP a la API
@@ -22,7 +21,7 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          final token = _preferences.getString(StorageConstants.authToken);
+          final token = _preferences.getString("");
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }

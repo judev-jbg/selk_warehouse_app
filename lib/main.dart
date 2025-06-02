@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'core/themes/app_theme.dart';
-import 'presentation/bloc/auth/auth_bloc.dart';
-import 'presentation/bloc/auth/auth_event.dart';
-import 'presentation/bloc/auth/auth_state.dart';
-import 'presentation/pages/login/login_page.dart';
-import 'presentation/pages/home/home_page.dart';
-import 'domain/entities/user.dart';
-import 'mocks/core_mocks.dart' as ck;
+import 'features/auth/presentation/bloc/auth/auth_bloc.dart';
+import 'features/auth/presentation/bloc/auth/auth_event.dart';
+import 'features/auth/presentation/bloc/auth/auth_state.dart';
+import 'features/auth/presentation/pages/login/login_page.dart';
+import 'features/auth/presentation/pages/home/home_page.dart';
+import 'features/auth/domain/entities/user.dart';
+
 import 'package:provider/provider.dart';
 import 'core/network/websocket_service.dart';
-import 'domain/usecases/usecase.dart' as np;
 
 // Reemplazo temporal de la inyección de dependencias
 final authBloc = AuthBloc(
@@ -28,6 +26,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -95,7 +95,7 @@ class Either<L, R> {
   bool get isLeft => !isRight;
 
   B fold<B>(B Function(L) ifLeft, B Function(R) ifRight) {
-    return isRight ? ifRight(right!) : ifLeft(left!);
+    return isRight ? ifRight(right as R) : ifLeft(left as L);
   }
 }
 
@@ -113,5 +113,5 @@ class Failure {
 }
 
 class AuthFailure extends Failure {
-  const AuthFailure(String message) : super(message);
+  const AuthFailure(super.message);
 }

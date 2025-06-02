@@ -1,36 +1,38 @@
-/// Excepciones personalizadas para la aplicación
-
-/// Excepción para errores de servidor
-class ServerException implements Exception {
+// lib/core/error/exceptions.dart
+/// Excepción base de la aplicación
+abstract class AppException implements Exception {
   final String message;
+  final String? code;
 
-  ServerException(this.message);
+  const AppException(this.message, [this.code]);
+
+  @override
+  String toString() =>
+      'AppException: $message${code != null ? ' (Code: $code)' : ''}';
 }
 
-/// Excepción para errores de caché local
-class CacheException implements Exception {
-  final String message;
-
-  CacheException(this.message);
+/// Excepción de servidor
+class ServerException extends AppException {
+  const ServerException(String message, [String? code]) : super(message, code);
 }
 
-/// Excepción para errores de conexión
-class NetworkException implements Exception {
-  final String message;
-
-  NetworkException(this.message);
+/// Excepción de caché/almacenamiento local
+class CacheException extends AppException {
+  const CacheException(String message, [String? code]) : super(message, code);
 }
 
-/// Excepción para errores de autenticación
-class AuthException implements Exception {
-  final String message;
-
-  AuthException(this.message);
+/// Excepción de red
+class NetworkException extends AppException {
+  const NetworkException(String message, [String? code]) : super(message, code);
 }
 
-/// Excepción para errores relacionados con dispositivos (escáner, impresora)
-class DeviceException implements Exception {
-  final String message;
+/// Excepción de autenticación
+class AuthException extends AppException {
+  const AuthException(String message, [String? code]) : super(message, code);
+}
 
-  DeviceException(this.message);
+/// Excepción de validación
+class ValidationException extends AppException {
+  const ValidationException(String message, [String? code])
+      : super(message, code);
 }
