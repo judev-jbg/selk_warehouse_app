@@ -8,7 +8,6 @@ import 'features/auth/presentation/pages/home/home_page.dart';
 import 'features/auth/domain/entities/user.dart';
 
 import 'package:provider/provider.dart';
-import 'core/network/websocket_service.dart';
 
 // Reemplazo temporal de la inyección de dependencias
 final authBloc = AuthBloc(
