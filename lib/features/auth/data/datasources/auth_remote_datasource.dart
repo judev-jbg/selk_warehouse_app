@@ -1,88 +1,167 @@
-import 'package:dio/dio.dart';
+// lib/features/auth/data/datasources/auth_remote_datasource.dart
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/network/api_client.dart';
+import '../models/login_request_model.dart';
+import '../models/login_response_model.dart';
 import '../models/user_model.dart';
 
 abstract class AuthRemoteDataSource {
-  /// Llama al endpoint de login
-  ///
-  /// Retorna [UserModel] si la autenticación es exitosa
-  /// Lanza [ServerException] si ocurre un error
-  Future<UserModel> login(String username, String password);
+  /// Iniciar sesión
+  Future<LoginResponseModel> login(LoginRequestModel request);
 
-  /// Llama al endpoint de logout
-  ///
-  /// Lanza [ServerException] si ocurre un error
+  /// Refrescar token
+  Future<String> refreshToken(String refreshToken, String deviceId);
+
+  /// Cerrar sesión
   Future<void> logout();
 
-  /// Valida si el token actual es válido
-  ///
-  /// Lanza [ServerException] si el token no es válido o hay error
-  Future<void> validateToken();
+  /// Obtener perfil del usuario
+  Future<UserModel> getProfile();
+
+  /// Verificar token
+  Future<bool> verifyToken();
+
+  /// Obtener logs de auditoría
+  Future<List<Map<String, dynamic>>> getAuditLogs({int limit = 50});
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
-  final Dio client;
+  final ApiClient apiClient;
 
-  AuthRemoteDataSourceImpl({required this.client});
+  AuthRemoteDataSourceImpl(this.apiClient);
 
   @override
-  Future<UserModel> login(String username, String password) async {
+  Future<LoginResponseModel> login(LoginRequestModel request) async {
     try {
-      final response = await client.post(
-        ApiConstants.loginUrl,
-        data: {'username': username, 'password': password},
+      final response = await apiClient.post(
+        ApiConstants.loginEndpoint,
+        data: request.toJson(),
       );
 
-      if (response.statusCode == 200) {
-        return UserModel.fromJson(response.data);
+      if (response['success'] == true && response['data'] != null) {
+        return LoginResponseModel.fromJson(
+            response['data'] as Map<String, dynamic>);
       } else {
         throw ServerException(
-          response.data['message'] ?? 'Error en la autenticación',
+          response['error'] ?? 'Error en el login',
+          response['code'],
         );
       }
-    } on DioException catch (e) {
-      throw ServerException(
-        e.response?.data?['message'] ?? 'Error de conexión con el servidor',
-      );
     } catch (e) {
-      throw ServerException('Error inesperado: $e');
+      if (e is AuthException || e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Error inesperado en login: $e');
+    }
+  }
+
+  @override
+  Future<String> refreshToken(String refreshToken, String deviceId) async {
+    try {
+      final response = await apiClient.post(
+        ApiConstants.refreshTokenEndpoint,
+        data: {
+          'refresh_token': refreshToken,
+          'device_identifier': deviceId,
+        },
+      );
+
+      if (response['success'] == true && response['data'] != null) {
+        final data = response['data'] as Map<String, dynamic>;
+        return data['access_token'] as String;
+      } else {
+        throw ServerException(
+          response['error'] ?? 'Error refrescando token',
+          response['code'],
+        );
+      }
+    } catch (e) {
+      if (e is AuthException || e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Error inesperado refrescando token: $e');
     }
   }
 
   @override
   Future<void> logout() async {
     try {
-      final response = await client.post(ApiConstants.logoutUrl);
+      final response = await apiClient.post(ApiConstants.logoutEndpoint);
 
-      if (response.statusCode != 200) {
+      if (response['success'] != true) {
         throw ServerException(
-          response.data['message'] ?? 'Error al cerrar sesión',
+          response['error'] ?? 'Error en logout',
+          response['code'],
         );
       }
-    } on DioException catch (e) {
-      throw ServerException(
-        e.response?.data?['message'] ?? 'Error de conexión con el servidor',
-      );
     } catch (e) {
-      throw ServerException('Error inesperado: $e');
+      if (e is AuthException || e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Error inesperado en logout: $e');
     }
   }
 
   @override
-  Future<void> validateToken() async {
+  Future<UserModel> getProfile() async {
     try {
-      final response = await client.get(ApiConstants.validateTokenUrl);
+      final response = await apiClient.get(ApiConstants.profileEndpoint);
 
-      if (response.statusCode != 200) {
-        throw ServerException('Token inválido');
+      if (response['success'] == true && response['data'] != null) {
+        return UserModel.fromJson(response['data'] as Map<String, dynamic>);
+      } else {
+        throw ServerException(
+          response['error'] ?? 'Error obteniendo perfil',
+          response['code'],
+        );
       }
-    } on DioException catch (e) {
-      throw ServerException(
-        e.response?.data?['message'] ?? 'Error de conexión con el servidor',
-      );
     } catch (e) {
-      throw ServerException('Error inesperado: $e');
+      if (e is AuthException || e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Error inesperado obteniendo perfil: $e');
+    }
+  }
+
+  @override
+  Future<bool> verifyToken() async {
+    try {
+      final response = await apiClient.post(ApiConstants.verifyTokenEndpoint);
+
+      if (response['success'] == true && response['data'] != null) {
+        final data = response['data'] as Map<String, dynamic>;
+        return data['valid'] as bool? ?? false;
+      }
+      return false;
+    } catch (e) {
+      // Si hay error verificando el token, asumimos que es inválido
+      return false;
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getAuditLogs({int limit = 50}) async {
+    try {
+      final response = await apiClient.get(
+        ApiConstants.auditLogsEndpoint,
+        queryParameters: {'limit': limit},
+      );
+
+      if (response['success'] == true && response['data'] != null) {
+        final data = response['data'] as List;
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw ServerException(
+          response['error'] ?? 'Error obteniendo logs de auditoría',
+          response['code'],
+        );
+      }
+    } catch (e) {
+      if (e is AuthException || e is ServerException || e is NetworkException) {
+        rethrow;
+      }
+      throw ServerException('Error inesperado obteniendo logs: $e');
     }
   }
 }
