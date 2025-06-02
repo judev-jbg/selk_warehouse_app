@@ -4,7 +4,6 @@ import 'features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth/auth_event.dart';
 import 'features/auth/presentation/bloc/auth/auth_state.dart';
 import 'features/auth/presentation/pages/login/login_page.dart';
-import 'features/auth/presentation/pages/home/home_page.dart';
 import 'features/auth/domain/entities/user.dart';
 
 import 'package:provider/provider.dart';
