@@ -1,16 +1,18 @@
+// lib/shared/widgets/loading_overlay.dart
 import 'package:flutter/material.dart';
+import '../../../core/constants/colors.dart';
 
 class LoadingOverlay extends StatelessWidget {
-  final Widget child;
   final bool isLoading;
-  final String message;
+  final Widget child;
+  final String? message;
 
   const LoadingOverlay({
-    super.key,
-    required this.child,
+    Key? key,
     required this.isLoading,
-    this.message = 'Cargando...',
-  });
+    required this.child,
+    this.message,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -19,26 +21,31 @@ class LoadingOverlay extends StatelessWidget {
         child,
         if (isLoading)
           Container(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black54,
             child: Center(
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text(
-                      message,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    const CircularProgressIndicator(
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.primary),
                     ),
+                    if (message != null) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        message!,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
