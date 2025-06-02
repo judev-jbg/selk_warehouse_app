@@ -1,18 +1,18 @@
 // lib/features/auth/presentation/pages/login_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:selk_warehouse_app/features/auth/presentation/bloc/auth/auth_event.dart';
-import 'package:selk_warehouse_app/features/auth/presentation/bloc/auth/auth_state.dart';
-import '../../../../../core/constants/colors.dart';
-import '../../../../../core/constants/app_constants.dart';
-import '../../../../../shared/utils/device_info.dart';
-import '../../../../../shared/utils/extensions.dart';
-import '../../../../../shared/widgets/common/loading_overlay.dart';
-import '../../../../../shared/widgets/common/error_widget.dart';
-import '../../../domain/entities/login_request.dart';
-import '../../bloc/auth/auth_bloc.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_text_field.dart';
+import 'package:selk_warehouse_app/features/auth/presentation/bloc/auth_event.dart';
+import 'package:selk_warehouse_app/features/auth/presentation/bloc/auth_state.dart';
+import '../../../../core/constants/colors.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../shared/utils/device_info.dart';
+import '../../../../shared/utils/extensions.dart';
+import '../../../../shared/widgets/common/loading_overlay.dart';
+import '../../../../shared/widgets/common/error_widget.dart';
+import '../../domain/entities/login_request.dart';
+import '../bloc/auth_bloc.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_text_field.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);

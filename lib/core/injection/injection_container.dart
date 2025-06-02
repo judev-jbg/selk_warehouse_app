@@ -19,7 +19,7 @@ import '../../features/auth/domain/usecases/login_user.dart';
 import '../../features/auth/domain/usecases/logout_user.dart';
 import '../../features/auth/domain/usecases/refresh_token.dart';
 import '../../features/auth/domain/usecases/get_cached_user.dart';
-import '../../features/auth/presentation/bloc/auth/auth_bloc.dart';
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
 
 final sl = GetIt.instance; // Service Locator
 

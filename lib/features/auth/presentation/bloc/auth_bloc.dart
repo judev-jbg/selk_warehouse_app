@@ -2,11 +2,11 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
-import '../../../../../core/usecases/usecase.dart'; // Solo este import para NoParams
-import '../../../domain/usecases/get_cached_user.dart';
-import '../../../domain/usecases/login_user.dart';
-import '../../../domain/usecases/logout_user.dart';
-import '../../../domain/usecases/refresh_token.dart';
+import '../../../../core/usecases/usecase.dart'; // Solo este import para NoParams
+import '../../domain/usecases/get_cached_user.dart';
+import '../../domain/usecases/login_user.dart';
+import '../../domain/usecases/logout_user.dart';
+import '../../domain/usecases/refresh_token.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
