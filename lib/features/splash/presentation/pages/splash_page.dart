@@ -187,9 +187,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                 builder: (context, child) {
                   return Opacity(
                     opacity: _textAnimation.value * 0.7,
-                    child: Text(
+                    child: const Text(
                       'Versión ${AppConstants.appVersion}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textOnPrimary,
                         fontWeight: FontWeight.w300,

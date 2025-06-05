@@ -208,9 +208,9 @@ class _LoginPageState extends State<LoginPage> {
       children: [
         const Divider(color: AppColors.divider),
         const SizedBox(height: 16),
-        Text(
+        const Text(
           'Versión ${AppConstants.appVersion}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             color: AppColors.textHint,
           ),

@@ -80,6 +80,7 @@ class UserModel extends User {
     };
   }
 
+  @override
   UserModel copyWith({
     String? id,
     int? odooUserId,

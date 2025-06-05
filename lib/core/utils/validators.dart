@@ -30,7 +30,7 @@ class Validators {
       return 'La contraseña es requerida';
     }
 
-    if (value.length < 1) {
+    if (value.isEmpty) {
       return 'La contraseña debe tener al menos 1 caracter';
     }
 

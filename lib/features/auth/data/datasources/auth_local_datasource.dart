@@ -130,7 +130,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
         return UserModel.fromDatabase(result.first);
       }
 
-      throw CacheException('No hay usuario en caché');
+      throw const CacheException('No hay usuario en caché');
     } catch (e) {
       if (e is CacheException) rethrow;
       throw CacheException('Error obteniendo usuario desde caché: $e');

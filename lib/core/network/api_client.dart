@@ -183,10 +183,10 @@ class ApiClient {
         case DioExceptionType.connectionTimeout:
         case DioExceptionType.sendTimeout:
         case DioExceptionType.receiveTimeout:
-          return NetworkException('Tiempo de conexión agotado');
+          return const NetworkException('Tiempo de conexión agotado');
 
         case DioExceptionType.connectionError:
-          return NetworkException('Error de conexión. Verifique su red.');
+          return const NetworkException('Error de conexión. Verifique su red.');
 
         case DioExceptionType.badResponse:
           final statusCode = error.response?.statusCode;
@@ -211,13 +211,13 @@ class ApiClient {
           }
 
         case DioExceptionType.cancel:
-          return NetworkException('Solicitud cancelada');
+          return const NetworkException('Solicitud cancelada');
 
         case DioExceptionType.unknown:
           if (error.error is SocketException) {
-            return NetworkException('Sin conexión a internet');
+            return const NetworkException('Sin conexión a internet');
           }
-          return NetworkException('Error de red desconocido');
+          return const NetworkException('Error de red desconocido');
 
         default:
           return NetworkException('Error de red: ${error.message}');

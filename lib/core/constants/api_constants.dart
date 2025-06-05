@@ -1,7 +1,17 @@
 // lib/core/constants/api_constants.dart
 class ApiConstants {
   // URL base de la API
-  static const String baseUrl = 'http://localhost:3000/api/v1';
+  static String get baseUrl {
+    // Para desarrollo, usar IP de red
+    // Para producción, usar el servidor real
+    const bool isProduction = bool.fromEnvironment('dart.vm.product');
+
+    if (isProduction) {
+      return 'https://tu-servidor-produccion.com/api/v1';
+    } else {
+      return 'http://192.168.1.50:3000/api/v1';
+    }
+  }
 
   // Endpoints de autenticación
   static const String loginEndpoint = '/auth/login';

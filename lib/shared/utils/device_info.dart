@@ -22,7 +22,7 @@ class DeviceInfoUtil {
       }
 
       // Crear hash del identificador para mayor seguridad
-      final bytes = utf8.encode(identifier + 'SELK-2025');
+      final bytes = utf8.encode('${identifier}SELK');
       final digest = sha256.convert(bytes);
 
       return 'PDA-SELK-${digest.toString().substring(0, 16).toUpperCase()}';

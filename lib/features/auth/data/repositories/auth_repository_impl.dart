@@ -28,7 +28,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       // Verificar conectividad
       if (!await networkInfo.isConnected) {
-        return Left(NetworkFailure('Sin conexión a internet'));
+        return const Left(NetworkFailure('Sin conexión a internet'));
       }
 
       // Convertir a modelo y enviar request
@@ -67,7 +67,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       // Verificar conectividad
       if (!await networkInfo.isConnected) {
-        return Left(NetworkFailure('Sin conexión a internet'));
+        return const Left(NetworkFailure('Sin conexión a internet'));
       }
 
       // Refrescar token
