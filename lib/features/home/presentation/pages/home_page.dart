@@ -1,6 +1,8 @@
 // lib/features/home/presentation/pages/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../shared/utils/extensions.dart';
+import '../../../auth/domain/entities/user.dart';
 import 'package:selk_warehouse_app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:selk_warehouse_app/features/auth/presentation/bloc/auth_state.dart';
 import '../../../../core/constants/colors.dart';
@@ -22,7 +24,7 @@ class HomePage extends StatelessWidget {
       },
       child: Scaffold(
         appBar: CustomAppBar(
-          title: 'SELK Warehouse',
+          title: 'SELK',
           showBackButton: false,
           actions: [
             IconButton(
@@ -47,7 +49,7 @@ class HomePage extends StatelessWidget {
 
                     // Título de módulos
                     Text(
-                      'Módulos Disponibles',
+                      'Menú principal',
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
@@ -60,9 +62,6 @@ class HomePage extends StatelessWidget {
                     _buildModulesGrid(context, state.user),
 
                     const SizedBox(height: 24),
-
-                    // Información adicional
-                    _buildInfoSection(context),
                   ],
                 ),
               );
@@ -77,7 +76,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildModulesGrid(BuildContext context, user) {
+  Widget _buildModulesGrid(BuildContext context, User user) {
     final modules = [
       {
         'name': 'Colocación',
@@ -126,59 +125,23 @@ class HomePage extends StatelessWidget {
           color: module['color'] as Color,
           isEnabled: hasPermission,
           onTap: hasPermission
-              ? () => _navigateToModule(context, module['route'] as String)
+              ? () => _navigateToModule(context, module['name'] as String)
               : null,
         );
       },
     );
   }
 
-  Widget _buildInfoSection(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.info_outline,
-                  color: AppColors.info,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Información',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              '• Las sesiones se cierran automáticamente a las 16:00 horas\n'
-              '• Mantenga activa la aplicación durante su jornada laboral\n'
-              '• Los datos se sincronizan automáticamente con el servidor\n'
-              '• En caso de problemas, contacte al administrador del sistema',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _navigateToModule(BuildContext context, String route) {
+  void _navigateToModule(BuildContext context, String moduleName) {
     // Por ahora, mostrar un mensaje de que el módulo está en desarrollo
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Módulo $route en desarrollo'),
+        content: Text('Módulo $moduleName en desarrollo'),
         backgroundColor: AppColors.info,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
       ),
     );
   }
