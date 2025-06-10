@@ -1,0 +1,66 @@
+lib/
+├── core/
+│   ├── constants/
+│   │   ├── api_constants.dart
+│   │   ├── app_constants.dart
+│   │   └── colors.dart
+│   ├── error/
+│   │   ├── exceptions.dart
+│   │   └── failures.dart
+│   ├── network/
+│   │   ├── api_client.dart
+│   │   └── network_info.dart
+│   ├── storage/
+│   │   ├── database_helper.dart
+│   │   └── secure_storage.dart
+│   └── utils/
+│       ├── input_converter.dart
+│       ├── logger.dart
+│       └── validators.dart
+├── features/
+│   ├── auth/
+│   │   ├── data/
+│   │   │   ├── datasources/
+│   │   │   │   ├── auth_local_datasource.dart
+│   │   │   │   └── auth_remote_datasource.dart
+│   │   │   ├── models/
+│   │   │   │   ├── login_request_model.dart
+│   │   │   │   ├── login_response_model.dart
+│   │   │   │   └── user_model.dart
+│   │   │   └── repositories/
+│   │   │       └── auth_repository_impl.dart
+│   │   ├── domain/
+│   │   │   ├── entities/
+│   │   │   │   ├── login_request.dart
+│   │   │   │   ├── login_response.dart
+│   │   │   │   └── user.dart
+│   │   │   ├── repositories/
+│   │   │   │   └── auth_repository.dart
+│   │   │   └── usecases/
+│   │   │       ├── get_cached_user.dart
+│   │   │       ├── login_user.dart
+│   │   │       ├── logout_user.dart
+│   │   │       └── refresh_token.dart
+│   │   └── presentation/
+│   │       ├── bloc/
+│   │       │   ├── auth_bloc.dart
+│   │       │   ├── auth_event.dart
+│   │       │   └── auth_state.dart
+│   │       ├── pages/
+│   │       │   └── login_page.dart
+│   │       └── widgets/
+│   │           ├── custom_button.dart
+│   │           ├── custom_text_field.dart
+│   │           └── loading_widget.dart
+│   ├── colocacion/
+│   ├── entrada/
+│   └── recogida/
+├── shared/
+│   ├── widgets/
+│   │   ├── custom_app_bar.dart
+│   │   ├── error_widget.dart
+│   │   └── loading_overlay.dart
+│   └── utils/
+│       ├── device_info.dart
+│       └── extensions.dart
+└── main.dart
