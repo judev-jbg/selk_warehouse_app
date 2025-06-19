@@ -6,9 +6,7 @@ import 'package:selk_warehouse_app/features/auth/presentation/bloc/auth_state.da
 import '../../../../core/constants/colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/utils/device_info.dart';
-import '../../../../shared/utils/extensions.dart';
 import '../../../../shared/widgets/common/loading_overlay.dart';
-import '../../../../shared/widgets/common/error_widget.dart';
 import '../../domain/entities/login_request.dart';
 import '../bloc/auth_bloc.dart';
 import '../widgets/custom_button.dart';

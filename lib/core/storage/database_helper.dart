@@ -113,6 +113,52 @@ class DatabaseHelper {
         'updated_at': DateTime.now().toIso8601String(),
       });
 
+      // Tabla de productos en cache
+      await db.execute('''
+      CREATE TABLE cached_products (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        default_code TEXT NOT NULL,
+        barcode TEXT NOT NULL UNIQUE,
+        qty_available REAL NOT NULL,
+        location TEXT,
+        active INTEGER NOT NULL DEFAULT 1,
+        categ_id INTEGER NOT NULL,
+        list_price REAL NOT NULL,
+        standard_price REAL NOT NULL,
+        uom_name TEXT NOT NULL,
+        company_id INTEGER NOT NULL,
+        last_updated TEXT NOT NULL,
+        is_optimistic INTEGER DEFAULT 0,
+        operation_id TEXT,
+        cached_at TEXT NOT NULL
+      )
+    ''');
+
+      // Tabla de operaciones
+      await db.execute('''
+      CREATE TABLE operations (
+        operation_id TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        product_id INTEGER,
+        message TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        error TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT
+      )
+    ''');
+
+      await db.execute(
+          'CREATE INDEX idx_cached_products_barcode ON cached_products(barcode)');
+      await db.execute(
+          'CREATE INDEX idx_cached_products_cached_at ON cached_products(cached_at)');
+      await db
+          .execute('CREATE INDEX idx_operations_status ON operations(status)');
+      await db.execute(
+          'CREATE INDEX idx_operations_timestamp ON operations(timestamp)');
+
       _logger.i('Base de datos creada exitosamente');
     } catch (e) {
       _logger.e('Error creando base de datos: $e');
