@@ -150,6 +150,32 @@ class DatabaseHelper {
       )
     ''');
 
+      // Tabla de etiquetas para impresión
+      await db.execute('''
+      CREATE TABLE labels (
+        id TEXT PRIMARY KEY,
+        product_id INTEGER NOT NULL,
+        product_name TEXT NOT NULL,
+        product_default_code TEXT NOT NULL,
+        product_barcode TEXT NOT NULL,
+        product_qty_available REAL NOT NULL,
+        location TEXT NOT NULL,
+        product_active INTEGER NOT NULL DEFAULT 1,
+        product_categ_id INTEGER NOT NULL,
+        product_list_price REAL NOT NULL,
+        product_standard_price REAL NOT NULL,
+        product_uom_name TEXT NOT NULL,
+        product_company_id INTEGER NOT NULL,
+        product_last_updated TEXT NOT NULL,
+        product_is_optimistic INTEGER DEFAULT 0,
+        product_operation_id TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        is_printed INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'pending'
+      )
+    ''');
+
       await db.execute(
           'CREATE INDEX idx_cached_products_barcode ON cached_products(barcode)');
       await db.execute(
@@ -158,6 +184,11 @@ class DatabaseHelper {
           .execute('CREATE INDEX idx_operations_status ON operations(status)');
       await db.execute(
           'CREATE INDEX idx_operations_timestamp ON operations(timestamp)');
+      await db
+          .execute('CREATE INDEX idx_labels_product_id ON labels(product_id)');
+      await db.execute('CREATE INDEX idx_labels_status ON labels(status)');
+      await db
+          .execute('CREATE INDEX idx_labels_created_at ON labels(created_at)');
 
       _logger.i('Base de datos creada exitosamente');
     } catch (e) {

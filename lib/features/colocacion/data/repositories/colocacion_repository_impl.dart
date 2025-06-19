@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:selk_warehouse_app/features/colocacion/domain/entities/label.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/network/network_info.dart';
@@ -305,6 +306,36 @@ class ColocacionRepositoryImpl implements ColocacionRepository {
     } catch (e) {
       // No es crítico si falla la limpieza
     }
+  }
+
+  @override
+  Future<Either<Failure, Label>> createLabel(Product product, String location) {
+    // TODO: implement createLabel
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteLabels(List<String> labelIds) {
+    // TODO: implement deleteLabels
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, List<Label>>> getLabelHistory({int limit = 50}) {
+    // TODO: implement getLabelHistory
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, List<Label>>> getPendingLabels() {
+    // TODO: implement getPendingLabels
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, void>> markLabelsAsPrinted(List<String> labelIds) {
+    // TODO: implement markLabelsAsPrinted
+    throw UnimplementedError();
   }
 }
 
