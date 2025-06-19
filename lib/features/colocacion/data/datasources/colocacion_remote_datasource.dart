@@ -2,6 +2,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/product_search_result_model.dart';
 import '../models/operation_result_model.dart';
+import '../services/websocket_service.dart';
 
 abstract class ColocacionRemoteDataSource {
   Future<ProductSearchResultModel> searchProductByBarcode(String barcode,
@@ -13,12 +14,38 @@ abstract class ColocacionRemoteDataSource {
   Future<OperationResultModel> getOperationStatus(String operationId);
   Future<List<OperationResultModel>> getPendingOperations();
   Future<bool> checkHealthStatus();
+  Future<void> initializeWebSocket();
+  Stream<Map<String, dynamic>> get realtimeUpdates;
+  Future<void> closeWebSocket();
 }
 
 class ColocacionRemoteDataSourceImpl implements ColocacionRemoteDataSource {
   final ApiClient apiClient;
+  final WebSocketService webSocketService;
 
-  ColocacionRemoteDataSourceImpl({required this.apiClient});
+  ColocacionRemoteDataSourceImpl({
+    required this.apiClient,
+    WebSocketService? webSocketService,
+  }) : webSocketService = webSocketService ?? WebSocketService();
+
+  /// Inicializar conexión WebSocket
+  Future<void> initializeWebSocket() async {
+    try {
+      await webSocketService.connect();
+    } catch (e) {
+      // No fallar si WebSocket no se puede conectar
+      // La app seguirá funcionando sin tiempo real
+    }
+  }
+
+  /// Obtener stream de eventos en tiempo real
+  Stream<Map<String, dynamic>> get realtimeUpdates =>
+      webSocketService.messageStream;
+
+  /// Cerrar conexión WebSocket
+  Future<void> closeWebSocket() async {
+    await webSocketService.disconnect();
+  }
 
   @override
   Future<ProductSearchResultModel> searchProductByBarcode(
@@ -56,7 +83,23 @@ class ColocacionRemoteDataSourceImpl implements ColocacionRemoteDataSource {
         data: {'location': newLocation},
       );
 
-      return OperationResultModel.fromUpdateResponse(response);
+      final result = OperationResultModel.fromUpdateResponse(response);
+
+      // Si la operación es optimista, notificar via WebSocket
+      if (result.isOptimistic) {
+        webSocketService.sendMessage({
+          'type': 'optimistic_update',
+          'operation': {
+            'id': result.operationId,
+            'type': 'location_update',
+            'productId': productId,
+            'newValue': newLocation,
+          },
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+      }
+
+      return result;
     } catch (e) {
       throw ServerException('Error actualizando localización: ${e.toString()}');
     }
@@ -73,7 +116,23 @@ class ColocacionRemoteDataSourceImpl implements ColocacionRemoteDataSource {
         data: {'qty_available': newStock},
       );
 
-      return OperationResultModel.fromUpdateResponse(response);
+      final result = OperationResultModel.fromUpdateResponse(response);
+
+      // Si la operación es optimista, notificar via WebSocket
+      if (result.isOptimistic) {
+        webSocketService.sendMessage({
+          'type': 'optimistic_update',
+          'operation': {
+            'id': result.operationId,
+            'type': 'stock_update',
+            'productId': productId,
+            'newValue': newStock,
+          },
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+      }
+
+      return result;
     } catch (e) {
       throw ServerException('Error actualizando stock: ${e.toString()}');
     }

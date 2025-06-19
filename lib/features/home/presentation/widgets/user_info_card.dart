@@ -87,7 +87,7 @@ class UserInfoCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   const Text(
-                    'Online',
+                    'En Línea',
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.success,

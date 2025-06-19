@@ -80,7 +80,7 @@ class HomePage extends StatelessWidget {
     final modules = [
       {
         'name': 'Colocación',
-        'description': 'Gestión de ubicación de productos',
+        'description': 'Ubicación de productos',
         'icon': Icons.place,
         'color': AppColors.colocacionColor,
         'route': '/colocacion',
@@ -133,17 +133,47 @@ class HomePage extends StatelessWidget {
   }
 
   void _navigateToModule(BuildContext context, String moduleName) {
-    // Por ahora, mostrar un mensaje de que el módulo está en desarrollo
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Módulo $moduleName en desarrollo'),
-        backgroundColor: AppColors.info,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    );
+    switch (moduleName.toLowerCase()) {
+      case 'colocación':
+        Navigator.of(context).pushNamed('/colocacion');
+        break;
+      case 'entrada':
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Módulo $moduleName en desarrollo'),
+            backgroundColor: AppColors.info,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+        break;
+      case 'recogida':
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Módulo $moduleName en desarrollo'),
+            backgroundColor: AppColors.info,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+        break;
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Módulo $moduleName en desarrollo'),
+            backgroundColor: AppColors.info,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+        break;
+    }
   }
 
   void _showLogoutDialog(BuildContext context) {

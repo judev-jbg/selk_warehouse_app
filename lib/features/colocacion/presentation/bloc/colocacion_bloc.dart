@@ -1,18 +1,22 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
-import 'package:selk_warehouse_app/core/usecases/usecase.dart';
-
+import 'package:selk_warehouse_app/features/colocacion/data/models/operation_result_model.dart';
+import 'package:selk_warehouse_app/features/colocacion/domain/entities/operation_result.dart';
+import '../../../../core/usecases/usecase.dart';
 import '../../domain/usecases/search_product_by_barcode.dart';
 import '../../domain/usecases/update_product_location.dart';
 import '../../domain/usecases/update_product_stock.dart';
-import '../../domain/repositories/colocacion_repository.dart';
-import 'colocacion_event.dart';
-import 'colocacion_state.dart';
 import '../../domain/usecases/create_label.dart';
 import '../../domain/usecases/get_pending_labels.dart';
 import '../../domain/usecases/mark_labels_as_printed.dart';
-import '../../domain/entities/label.dart';
+import '../../domain/repositories/colocacion_repository.dart';
+import '../../data/services/websocket_service.dart';
+import '../../data/services/optimistic_updates_service.dart';
+import '../../data/services/barcode_processor.dart';
+import '../../data/datasources/colocacion_remote_datasource.dart';
+import 'colocacion_event.dart';
+import 'colocacion_state.dart';
 
 class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
   final SearchProductByBarcode searchProductByBarcode;
@@ -22,7 +26,12 @@ class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
   final GetPendingLabels getPendingLabels;
   final MarkLabelsAsPrinted markLabelsAsPrinted;
   final ColocacionRepository repository;
+  final ColocacionRemoteDataSource remoteDataSource;
+  final OptimisticUpdatesService optimisticUpdatesService;
+  final WebSocketService webSocketService;
   final Logger logger;
+  StreamSubscription<Map<String, dynamic>>? _webSocketSubscription;
+  StreamSubscription<OperationResultModel>? _optimisticUpdatesSubscription;
 
   ColocacionBloc({
     required this.searchProductByBarcode,
@@ -32,6 +41,9 @@ class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
     required this.getPendingLabels,
     required this.markLabelsAsPrinted,
     required this.repository,
+    required this.remoteDataSource,
+    required this.optimisticUpdatesService,
+    required this.webSocketService,
     required this.logger,
   }) : super(ColocacionInitial()) {
     on<ColocacionSearchProduct>(_onSearchProduct);
@@ -40,7 +52,6 @@ class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
     on<ColocacionClearSearch>(_onClearSearch);
     on<ColocacionClearError>(_onClearError);
     on<ColocacionConfirmOperation>(_onConfirmOperation);
-    on<ColocacionCancelOperation>(_onCancelOperation);
     on<ColocacionGetPendingOperations>(_onGetPendingOperations);
     on<ColocacionClearCache>(_onClearCache);
     on<ColocacionWebSocketNotification>(_onWebSocketNotification);
@@ -50,6 +61,8 @@ class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
     on<ColocacionMarkLabelsAsPrinted>(_onMarkLabelsAsPrinted);
     on<ColocacionDeleteLabels>(_onDeleteLabels);
     on<ColocacionLoadLabelHistory>(_onLoadLabelHistory);
+    on<ColocacionCancelOperation>(_onCancelOperation);
+    _initializeConnections();
   }
 
   /// Buscar producto por código de barras
@@ -93,6 +106,50 @@ class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
     } catch (e) {
       logger.e('Error inesperado buscando producto: $e');
       emit(ColocacionError(message: 'Error inesperado: ${e.toString()}'));
+    }
+  }
+
+  /// Inicializar conexiones WebSocket y optimistic updates
+  Future<void> _initializeConnections() async {
+    try {
+      // Inicializar WebSocket
+      await remoteDataSource.initializeWebSocket();
+
+      // Suscribirse a notificaciones WebSocket
+      _webSocketSubscription = remoteDataSource.realtimeUpdates.listen(
+        (data) => add(ColocacionWebSocketNotification(data: data)),
+        onError: (error) {
+          logger.e('Error en stream WebSocket: $error');
+        },
+      );
+
+      // Suscribirse a updates optimistas
+      _optimisticUpdatesSubscription =
+          optimisticUpdatesService.operationUpdates.listen(
+        (operationResult) {
+          // Emitir estado basado en el resultado de la operación
+          if (operationResult.isSuccess) {
+            emit(ColocacionUpdateSuccess(
+              operationResult: operationResult,
+              fieldUpdated: operationResult.type == OperationType.locationUpdate
+                  ? 'location'
+                  : 'stock',
+            ));
+          } else if (operationResult.isFailed) {
+            emit(ColocacionError(
+              message:
+                  operationResult.error ?? 'Error en actualización optimista',
+            ));
+          }
+        },
+        onError: (error) {
+          logger.e('Error en stream optimistic updates: $error');
+        },
+      );
+
+      logger.i('Conexiones inicializadas exitosamente');
+    } catch (e) {
+      logger.e('Error inicializando conexiones: $e');
     }
   }
 

@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:selk_warehouse_app/features/auth/presentation/bloc/auth_event.dart';
+import 'package:selk_warehouse_app/features/colocacion/presentation/bloc/colocacion_bloc.dart';
+import 'package:selk_warehouse_app/features/colocacion/presentation/pages/colocacion_main_page.dart';
+import 'package:selk_warehouse_app/features/colocacion/presentation/pages/labels_page.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/constants/colors.dart';
@@ -203,6 +206,20 @@ class SelkWarehouseApp extends StatelessWidget {
         return MaterialPageRoute(builder: (_) => const LoginPage());
       case '/home':
         return MaterialPageRoute(builder: (_) => const HomePage());
+      case '/colocacion':
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => di.sl<ColocacionBloc>(),
+            child: const ColocacionMainPage(),
+          ),
+        );
+      case '/colocacion/labels':
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => di.sl<ColocacionBloc>(),
+            child: const LabelsPage(),
+          ),
+        );
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
