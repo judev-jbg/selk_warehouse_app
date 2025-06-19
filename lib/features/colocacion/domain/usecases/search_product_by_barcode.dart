@@ -3,6 +3,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../entities/product_search_result.dart';
 import '../repositories/colocacion_repository.dart';
+import '../../data/services/barcode_processor.dart';
 
 class SearchProductByBarcode
     implements UseCase<ProductSearchResult, SearchProductParams> {
@@ -13,18 +14,29 @@ class SearchProductByBarcode
   @override
   Future<Either<Failure, ProductSearchResult>> call(
       SearchProductParams params) async {
-    // Validar código de barras
-    if (params.barcode.trim().isEmpty) {
-      return const Left(ValidationFailure('Código de barras requerido'));
+    // Procesar código de barras con el BarcodeProcessor mejorado
+    final processResult =
+        BarcodeProcessor.processScannedBarcode(params.barcode);
+
+    if (!processResult.isSuccess) {
+      return Left(ValidationFailure(
+          processResult.error ?? 'Código de barras inválido'));
     }
 
-    // Limpiar código de barras (quitar sufijos de escáner)
-    final cleanBarcode = _cleanBarcode(params.barcode);
+    final cleanBarcode = processResult.cleanedBarcode!;
 
-    // Validar longitud (EAN13 o DUN14)
-    if (cleanBarcode.length != 13 && cleanBarcode.length != 14) {
-      return const Left(
-          ValidationFailure('Código de barras debe tener 13 o 14 dígitos'));
+    // Validar que el tipo de código sea soportado
+    if (!processResult.barcodeType!.isSupported) {
+      return Left(ValidationFailure(
+          'Tipo de código no soportado: ${processResult.barcodeType!.displayName}\n'
+          'Solo se permiten códigos EAN-13 y DUN-14'));
+    }
+
+    // Advertir si el checksum no es válido pero continuar
+    if (!processResult.isValidChecksum &&
+        processResult.validationMessage != null) {
+      // Log warning pero continuar con la búsqueda
+      print('⚠️ Warning: ${processResult.validationMessage}');
     }
 
     // Buscar producto
@@ -32,17 +44,6 @@ class SearchProductByBarcode
       cleanBarcode,
       useCache: params.useCache,
     );
-  }
-
-  /// Limpiar código de barras eliminando sufijos del escáner
-  String _cleanBarcode(String barcode) {
-    // Quitar sufijos comunes: \n, \t, \r y espacios
-    return barcode
-        .replaceAll('\n', '')
-        .replaceAll('\t', '')
-        .replaceAll('\r', '')
-        .replaceAll(' ', '')
-        .trim();
   }
 }
 
@@ -54,4 +55,15 @@ class SearchProductParams {
     required this.barcode,
     this.useCache = true,
   });
+
+  /// Crear parámetros con información de procesamiento
+  factory SearchProductParams.fromProcessedBarcode({
+    required BarcodeProcessResult processResult,
+    bool useCache = true,
+  }) {
+    return SearchProductParams(
+      barcode: processResult.cleanedBarcode!,
+      useCache: useCache,
+    );
+  }
 }

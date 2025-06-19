@@ -3,21 +3,24 @@ import 'package:logger/logger.dart';
 class BarcodeProcessor {
   static final Logger _logger = Logger();
 
-  // Sufijos comunes de escáneres PDA
+  // Sufijos comunes de escáneres PDA (incluyendo más variaciones)
   static const List<String> _commonSuffixes = [
     '\n',
     '\t',
     '\r',
     '\x0D',
-    '\x0A'
+    '\x0A',
+    '\r\n',
+    ' ', // Espacio al final
   ];
 
   // Prefijos que algunos escáneres pueden agregar
   static const List<String> _commonPrefixes = [''];
 
-  /// Procesar código de barras desde escáner PDA
+  /// Procesar código de barras desde escáner PDA o input manual
   static BarcodeProcessResult processScannedBarcode(String rawInput) {
-    _logger.d('Procesando código escaneado: "$rawInput"');
+    _logger.d(
+        'Procesando código escaneado: "$rawInput" (length: ${rawInput.length})');
 
     if (rawInput.isEmpty) {
       return BarcodeProcessResult.error('Código vacío');
@@ -26,55 +29,86 @@ class BarcodeProcessor {
     // Limpiar sufijos y prefijos
     String cleanedBarcode = _cleanBarcode(rawInput);
 
-    // Validar longitud
+    // Validar longitud después de limpiar
     if (cleanedBarcode.isEmpty) {
       return BarcodeProcessResult.error('Código vacío después de limpiar');
     }
 
-    // Validar formato (solo números para EAN13/DUN14)
+    // Validar que contenga solo números (para EAN13/DUN14)
     if (!RegExp(r'^[0-9]+$').hasMatch(cleanedBarcode)) {
-      return BarcodeProcessResult.error('Código contiene caracteres inválidos');
+      return BarcodeProcessResult.error(
+          'Código contiene caracteres inválidos. Solo se permiten números.');
     }
 
     // Validar longitud esperada
     if (cleanedBarcode.length < 8 || cleanedBarcode.length > 14) {
       return BarcodeProcessResult.error(
-          'Longitud inválida: ${cleanedBarcode.length} (esperado: 8-14 dígitos)');
+          'Longitud inválida: ${cleanedBarcode.length} dígitos (esperado: 8-14)');
     }
 
     // Detectar tipo de código
     final barcodeType = _detectBarcodeType(cleanedBarcode);
 
-    _logger.i('Código procesado: "$cleanedBarcode" (tipo: $barcodeType)');
+    // Validar checksum si es EAN13 o DUN14
+    bool isValidChecksum = true;
+    String validationMessage = '';
+
+    if (barcodeType == BarcodeType.ean13) {
+      isValidChecksum = validateEAN13Checksum(cleanedBarcode);
+      if (!isValidChecksum) {
+        validationMessage = 'Checksum EAN13 inválido';
+      }
+    } else if (barcodeType == BarcodeType.dun14) {
+      isValidChecksum = validateDUN14Checksum(cleanedBarcode);
+      if (!isValidChecksum) {
+        validationMessage = 'Checksum DUN14 inválido';
+      }
+    }
+
+    _logger.i(
+        'Código procesado: "$cleanedBarcode" (tipo: ${barcodeType.displayName}, '
+        'válido: $isValidChecksum)');
 
     return BarcodeProcessResult.success(
       cleanedBarcode: cleanedBarcode,
       originalInput: rawInput,
       barcodeType: barcodeType,
       hadSuffixes: rawInput != cleanedBarcode,
+      isValidChecksum: isValidChecksum,
+      validationMessage: validationMessage,
     );
   }
 
-  /// Limpiar código de barras
+  /// Limpiar código de barras de manera más robusta
   static String _cleanBarcode(String input) {
     String cleaned = input;
 
-    // Remover sufijos comunes
+    // Remover sufijos comunes en orden específico
     for (final suffix in _commonSuffixes) {
-      cleaned = cleaned.replaceAll(suffix, '');
+      while (cleaned.endsWith(suffix)) {
+        cleaned = cleaned.substring(0, cleaned.length - suffix.length);
+      }
     }
 
-    // Remover prefijos comunes (si los hubiera)
+    // Remover prefijos comunes
     for (final prefix in _commonPrefixes) {
       if (prefix.isNotEmpty && cleaned.startsWith(prefix)) {
         cleaned = cleaned.substring(prefix.length);
       }
     }
 
-    // Trim espacios en blanco
+    // Trim espacios en blanco y caracteres de control
     cleaned = cleaned.trim();
 
+    // Remover caracteres de control Unicode
+    cleaned = cleaned.replaceAll(RegExp(r'[\x00-\x1F\x7F-\x9F]'), '');
+
     return cleaned;
+  }
+
+  /// Detectar si el input viene de un escáner (tiene sufijos)
+  static bool isFromScanner(String input) {
+    return _commonSuffixes.any((suffix) => input.contains(suffix));
   }
 
   /// Detectar tipo de código de barras
@@ -130,15 +164,36 @@ class BarcodeProcessor {
       return false;
     }
   }
+
+  /// Generar código de ejemplo para testing
+  static String generateSampleEAN13() {
+    final code = List.generate(12,
+            (_) => (0 + (9 * (DateTime.now().microsecond % 10) / 10).floor()))
+        .join();
+    final checkDigit = _calculateEAN13CheckDigit(code);
+    return code + checkDigit.toString();
+  }
+
+  static int _calculateEAN13CheckDigit(String code) {
+    final digits = code.split('').map(int.parse).toList();
+    int sum = 0;
+    for (int i = 0; i < 12; i++) {
+      sum += digits[i] * (i % 2 == 0 ? 1 : 3);
+    }
+    final remainder = sum % 10;
+    return remainder == 0 ? 0 : 10 - remainder;
+  }
 }
 
-/// Resultado del procesamiento de código de barras
+/// Resultado del procesamiento de código de barras (actualizado)
 class BarcodeProcessResult {
   final bool isSuccess;
   final String? cleanedBarcode;
   final String? originalInput;
   final BarcodeType? barcodeType;
   final bool hadSuffixes;
+  final bool isValidChecksum;
+  final String? validationMessage;
   final String? error;
 
   const BarcodeProcessResult._({
@@ -147,6 +202,8 @@ class BarcodeProcessResult {
     this.originalInput,
     this.barcodeType,
     this.hadSuffixes = false,
+    this.isValidChecksum = true,
+    this.validationMessage,
     this.error,
   });
 
@@ -155,6 +212,8 @@ class BarcodeProcessResult {
     required String originalInput,
     required BarcodeType barcodeType,
     required bool hadSuffixes,
+    bool isValidChecksum = true,
+    String? validationMessage,
   }) {
     return BarcodeProcessResult._(
       isSuccess: true,
@@ -162,6 +221,8 @@ class BarcodeProcessResult {
       originalInput: originalInput,
       barcodeType: barcodeType,
       hadSuffixes: hadSuffixes,
+      isValidChecksum: isValidChecksum,
+      validationMessage: validationMessage,
     );
   }
 
@@ -170,6 +231,20 @@ class BarcodeProcessResult {
       isSuccess: false,
       error: error,
     );
+  }
+
+  /// Información para debugging
+  Map<String, dynamic> toDebugMap() {
+    return {
+      'isSuccess': isSuccess,
+      'cleanedBarcode': cleanedBarcode,
+      'originalInput': originalInput,
+      'barcodeType': barcodeType?.displayName,
+      'hadSuffixes': hadSuffixes,
+      'isValidChecksum': isValidChecksum,
+      'validationMessage': validationMessage,
+      'error': error,
+    };
   }
 }
 
@@ -200,5 +275,20 @@ extension BarcodeTypeExtension on BarcodeType {
 
   bool get isSupported {
     return this == BarcodeType.ean13 || this == BarcodeType.dun14;
+  }
+
+  String get description {
+    switch (this) {
+      case BarcodeType.ean13:
+        return 'Código de barras estándar de 13 dígitos';
+      case BarcodeType.dun14:
+        return 'Código de barras de distribución de 14 dígitos';
+      case BarcodeType.ean8:
+        return 'Código de barras corto de 8 dígitos';
+      case BarcodeType.upc:
+        return 'Código UPC de 12 dígitos';
+      case BarcodeType.unknown:
+        return 'Tipo de código desconocido';
+    }
   }
 }
