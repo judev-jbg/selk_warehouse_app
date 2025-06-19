@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:selk_warehouse_app/features/colocacion/data/models/label_model.dart';
 import 'package:selk_warehouse_app/features/colocacion/domain/entities/label.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/error/exceptions.dart';
@@ -309,33 +310,88 @@ class ColocacionRepositoryImpl implements ColocacionRepository {
   }
 
   @override
-  Future<Either<Failure, Label>> createLabel(Product product, String location) {
-    // TODO: implement createLabel
-    throw UnimplementedError();
+  Future<Either<Failure, Label>> createLabel(
+      Product product, String location) async {
+    try {
+      // Generar ID único para la etiqueta
+      final labelId =
+          'label_${DateTime.now().millisecondsSinceEpoch}_${product.id}';
+
+      final label = LabelModel(
+        id: labelId,
+        product: product,
+        location: location,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        isPrinted: false,
+        status: 'pending',
+      );
+
+      // Guardar etiqueta en base de datos local
+      await localDataSource.saveLabel(label);
+
+      return Right(label);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message, e.code));
+    } catch (e) {
+      return Left(CacheFailure('Error creando etiqueta: ${e.toString()}'));
+    }
   }
 
   @override
-  Future<Either<Failure, void>> deleteLabels(List<String> labelIds) {
-    // TODO: implement deleteLabels
-    throw UnimplementedError();
+  Future<Either<Failure, List<Label>>> getPendingLabels() async {
+    try {
+      final labels = await localDataSource.getPendingLabels();
+      return Right(labels);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message, e.code));
+    } catch (e) {
+      return Left(CacheFailure(
+          'Error obteniendo etiquetas pendientes: ${e.toString()}'));
+    }
   }
 
   @override
-  Future<Either<Failure, List<Label>>> getLabelHistory({int limit = 50}) {
-    // TODO: implement getLabelHistory
-    throw UnimplementedError();
+  Future<Either<Failure, void>> markLabelsAsPrinted(
+      List<String> labelIds) async {
+    try {
+      // Actualizar estado de cada etiqueta
+      for (final labelId in labelIds) {
+        await localDataSource.updateLabelStatus(labelId, 'printed', true);
+      }
+
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message, e.code));
+    } catch (e) {
+      return Left(CacheFailure(
+          'Error marcando etiquetas como impresas: ${e.toString()}'));
+    }
   }
 
   @override
-  Future<Either<Failure, List<Label>>> getPendingLabels() {
-    // TODO: implement getPendingLabels
-    throw UnimplementedError();
+  Future<Either<Failure, void>> deleteLabels(List<String> labelIds) async {
+    try {
+      await localDataSource.deleteLabels(labelIds);
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message, e.code));
+    } catch (e) {
+      return Left(CacheFailure('Error eliminando etiquetas: ${e.toString()}'));
+    }
   }
 
   @override
-  Future<Either<Failure, void>> markLabelsAsPrinted(List<String> labelIds) {
-    // TODO: implement markLabelsAsPrinted
-    throw UnimplementedError();
+  Future<Either<Failure, List<Label>>> getLabelHistory({int limit = 50}) async {
+    try {
+      final labels = await localDataSource.getAllLabels(limit: limit);
+      return Right(labels);
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message, e.code));
+    } catch (e) {
+      return Left(CacheFailure(
+          'Error obteniendo historial de etiquetas: ${e.toString()}'));
+    }
   }
 }
 

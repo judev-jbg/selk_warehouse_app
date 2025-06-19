@@ -1,18 +1,26 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
-import '../../../../core/usecases/usecase.dart';
+import 'package:selk_warehouse_app/core/usecases/usecase.dart';
+
 import '../../domain/usecases/search_product_by_barcode.dart';
 import '../../domain/usecases/update_product_location.dart';
 import '../../domain/usecases/update_product_stock.dart';
 import '../../domain/repositories/colocacion_repository.dart';
 import 'colocacion_event.dart';
 import 'colocacion_state.dart';
+import '../../domain/usecases/create_label.dart';
+import '../../domain/usecases/get_pending_labels.dart';
+import '../../domain/usecases/mark_labels_as_printed.dart';
+import '../../domain/entities/label.dart';
 
 class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
   final SearchProductByBarcode searchProductByBarcode;
   final UpdateProductLocation updateProductLocation;
   final UpdateProductStock updateProductStock;
+  final CreateLabel createLabel;
+  final GetPendingLabels getPendingLabels;
+  final MarkLabelsAsPrinted markLabelsAsPrinted;
   final ColocacionRepository repository;
   final Logger logger;
 
@@ -20,6 +28,9 @@ class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
     required this.searchProductByBarcode,
     required this.updateProductLocation,
     required this.updateProductStock,
+    required this.createLabel,
+    required this.getPendingLabels,
+    required this.markLabelsAsPrinted,
     required this.repository,
     required this.logger,
   }) : super(ColocacionInitial()) {
@@ -34,6 +45,11 @@ class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
     on<ColocacionClearCache>(_onClearCache);
     on<ColocacionWebSocketNotification>(_onWebSocketNotification);
     on<ColocacionReset>(_onReset);
+    on<ColocacionCreateLabel>(_onCreateLabel);
+    on<ColocacionLoadPendingLabels>(_onLoadPendingLabels);
+    on<ColocacionMarkLabelsAsPrinted>(_onMarkLabelsAsPrinted);
+    on<ColocacionDeleteLabels>(_onDeleteLabels);
+    on<ColocacionLoadLabelHistory>(_onLoadLabelHistory);
   }
 
   /// Buscar producto por código de barras
@@ -103,12 +119,22 @@ class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
           logger.e('Error actualizando localización: ${failure.message}');
           emit(ColocacionError(message: failure.message));
         },
-        (operationResult) {
+        (operationResult) async {
           logger.i('Localización actualizada: ${operationResult.message}');
           emit(ColocacionUpdateSuccess(
             operationResult: operationResult,
             fieldUpdated: 'location',
           ));
+
+          // Crear etiqueta automáticamente después de actualizar localización exitosamente
+          if (operationResult.isSuccess && operationResult.product != null) {
+            logger.i(
+                'Creando etiqueta automáticamente para producto ${event.productId}');
+            add(ColocacionCreateLabel(
+              productId: event.productId,
+              location: event.newLocation,
+            ));
+          }
         },
       );
     } catch (e) {
@@ -149,6 +175,179 @@ class ColocacionBloc extends Bloc<ColocacionEvent, ColocacionState> {
       );
     } catch (e) {
       logger.e('Error inesperado actualizando stock: $e');
+      emit(ColocacionError(message: 'Error inesperado: ${e.toString()}'));
+    }
+  }
+
+  /// Crear etiqueta para impresión
+  Future<void> _onCreateLabel(
+    ColocacionCreateLabel event,
+    Emitter<ColocacionState> emit,
+  ) async {
+    try {
+      emit(const ColocacionLoading(message: 'Creando etiqueta...'));
+
+      logger.i('Creando etiqueta para producto: ${event.productId}');
+
+      // Primero necesitamos obtener el producto
+      final productResult =
+          await repository.getCachedProduct(event.productId.toString());
+
+      await productResult.fold(
+        (failure) async => emit(ColocacionError(message: failure.message)),
+        (product) async {
+          final result = await createLabel(CreateLabelParams(
+            product: product,
+            location: event.location,
+          ));
+
+          result.fold(
+            (failure) {
+              logger.e('Error creando etiqueta: ${failure.message}');
+              emit(ColocacionError(message: failure.message));
+            },
+            (label) {
+              logger.i('Etiqueta creada exitosamente: ${label.id}');
+              emit(ColocacionLabelCreated(label: label));
+            },
+          );
+        },
+      );
+    } catch (e) {
+      logger.e('Error inesperado creando etiqueta: $e');
+      emit(ColocacionError(message: 'Error inesperado: ${e.toString()}'));
+    }
+  }
+
+  /// Cargar etiquetas pendientes
+  Future<void> _onLoadPendingLabels(
+    ColocacionLoadPendingLabels event,
+    Emitter<ColocacionState> emit,
+  ) async {
+    try {
+      emit(const ColocacionLoading(message: 'Cargando etiquetas...'));
+
+      logger.i('Cargando etiquetas pendientes');
+
+      final result = await getPendingLabels(NoParams());
+
+      result.fold(
+        (failure) {
+          logger.e('Error cargando etiquetas: ${failure.message}');
+          emit(ColocacionError(message: failure.message));
+        },
+        (labels) {
+          logger.i('Etiquetas cargadas: ${labels.length}');
+          emit(ColocacionLabelsLoaded(
+            labels: labels,
+            type: 'pending',
+          ));
+        },
+      );
+    } catch (e) {
+      logger.e('Error inesperado cargando etiquetas: $e');
+      emit(ColocacionError(message: 'Error inesperado: ${e.toString()}'));
+    }
+  }
+
+  /// Marcar etiquetas como impresas
+  Future<void> _onMarkLabelsAsPrinted(
+    ColocacionMarkLabelsAsPrinted event,
+    Emitter<ColocacionState> emit,
+  ) async {
+    try {
+      emit(const ColocacionLoading(
+          message: 'Marcando etiquetas como impresas...'));
+
+      logger.i('Marcando ${event.labelIds.length} etiquetas como impresas');
+
+      final result = await markLabelsAsPrinted(MarkLabelsParams(
+        labelIds: event.labelIds,
+      ));
+
+      result.fold(
+        (failure) {
+          logger.e('Error marcando etiquetas: ${failure.message}');
+          emit(ColocacionError(message: failure.message));
+        },
+        (_) {
+          logger.i('Etiquetas marcadas como impresas exitosamente');
+          emit(ColocacionLabelsMarkedAsPrinted(
+            labelIds: event.labelIds,
+            count: event.labelIds.length,
+          ));
+
+          // Recargar etiquetas pendientes
+          add(ColocacionLoadPendingLabels());
+        },
+      );
+    } catch (e) {
+      logger.e('Error inesperado marcando etiquetas: $e');
+      emit(ColocacionError(message: 'Error inesperado: ${e.toString()}'));
+    }
+  }
+
+  /// Eliminar etiquetas
+  Future<void> _onDeleteLabels(
+    ColocacionDeleteLabels event,
+    Emitter<ColocacionState> emit,
+  ) async {
+    try {
+      emit(const ColocacionLoading(message: 'Eliminando etiquetas...'));
+
+      logger.i('Eliminando ${event.labelIds.length} etiquetas');
+
+      final result = await repository.deleteLabels(event.labelIds);
+
+      result.fold(
+        (failure) {
+          logger.e('Error eliminando etiquetas: ${failure.message}');
+          emit(ColocacionError(message: failure.message));
+        },
+        (_) {
+          logger.i('Etiquetas eliminadas exitosamente');
+          emit(ColocacionLabelsDeleted(
+            labelIds: event.labelIds,
+            count: event.labelIds.length,
+          ));
+
+          // Recargar etiquetas pendientes
+          add(ColocacionLoadPendingLabels());
+        },
+      );
+    } catch (e) {
+      logger.e('Error inesperado eliminando etiquetas: $e');
+      emit(ColocacionError(message: 'Error inesperado: ${e.toString()}'));
+    }
+  }
+
+  /// Cargar historial de etiquetas
+  Future<void> _onLoadLabelHistory(
+    ColocacionLoadLabelHistory event,
+    Emitter<ColocacionState> emit,
+  ) async {
+    try {
+      emit(const ColocacionLoading(message: 'Cargando historial...'));
+
+      logger.i('Cargando historial de etiquetas');
+
+      final result = await repository.getLabelHistory(limit: event.limit);
+
+      result.fold(
+        (failure) {
+          logger.e('Error cargando historial: ${failure.message}');
+          emit(ColocacionError(message: failure.message));
+        },
+        (labels) {
+          logger.i('Historial cargado: ${labels.length} etiquetas');
+          emit(ColocacionLabelsLoaded(
+            labels: labels,
+            type: 'history',
+          ));
+        },
+      );
+    } catch (e) {
+      logger.e('Error inesperado cargando historial: $e');
       emit(ColocacionError(message: 'Error inesperado: ${e.toString()}'));
     }
   }

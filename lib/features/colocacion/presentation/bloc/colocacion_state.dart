@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:selk_warehouse_app/features/colocacion/domain/entities/label.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/entities/product_search_result.dart';
 import '../../domain/entities/operation_result.dart';
@@ -136,4 +137,63 @@ class ColocacionRealtimeUpdate extends ColocacionState {
 
   @override
   List<Object?> get props => [type, data, timestamp];
+}
+
+/// Estado con etiqueta creada exitosamente
+class ColocacionLabelCreated extends ColocacionState {
+  final Label label;
+  final String message;
+
+  const ColocacionLabelCreated({
+    required this.label,
+    this.message = 'Etiqueta creada exitosamente',
+  });
+
+  @override
+  List<Object?> get props => [label, message];
+}
+
+/// Estado con etiquetas pendientes cargadas
+class ColocacionLabelsLoaded extends ColocacionState {
+  final List<Label> labels;
+  final String type; // 'pending', 'history'
+
+  const ColocacionLabelsLoaded({
+    required this.labels,
+    required this.type,
+  });
+
+  @override
+  List<Object?> get props => [labels, type];
+
+  int get pendingCount => labels.where((label) => label.canBePrinted).length;
+  bool get hasLabels => labels.isNotEmpty;
+}
+
+/// Estado después de marcar etiquetas como impresas
+class ColocacionLabelsMarkedAsPrinted extends ColocacionState {
+  final List<String> labelIds;
+  final int count;
+
+  const ColocacionLabelsMarkedAsPrinted({
+    required this.labelIds,
+    required this.count,
+  });
+
+  @override
+  List<Object?> get props => [labelIds, count];
+}
+
+/// Estado después de eliminar etiquetas
+class ColocacionLabelsDeleted extends ColocacionState {
+  final List<String> labelIds;
+  final int count;
+
+  const ColocacionLabelsDeleted({
+    required this.labelIds,
+    required this.count,
+  });
+
+  @override
+  List<Object?> get props => [labelIds, count];
 }

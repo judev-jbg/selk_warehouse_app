@@ -93,3 +93,50 @@ class ColocacionWebSocketNotification extends ColocacionEvent {
 
 /// Evento: reinicializar estado
 class ColocacionReset extends ColocacionEvent {}
+
+/// Evento: crear etiqueta para impresión
+class ColocacionCreateLabel extends ColocacionEvent {
+  final int productId;
+  final String location;
+
+  const ColocacionCreateLabel({
+    required this.productId,
+    required this.location,
+  });
+
+  @override
+  List<Object?> get props => [productId, location];
+}
+
+/// Evento: obtener etiquetas pendientes
+class ColocacionLoadPendingLabels extends ColocacionEvent {}
+
+/// Evento: marcar etiquetas como impresas
+class ColocacionMarkLabelsAsPrinted extends ColocacionEvent {
+  final List<String> labelIds;
+
+  const ColocacionMarkLabelsAsPrinted({required this.labelIds});
+
+  @override
+  List<Object?> get props => [labelIds];
+}
+
+/// Evento: eliminar etiquetas
+class ColocacionDeleteLabels extends ColocacionEvent {
+  final List<String> labelIds;
+
+  const ColocacionDeleteLabels({required this.labelIds});
+
+  @override
+  List<Object?> get props => [labelIds];
+}
+
+/// Evento: obtener historial de etiquetas
+class ColocacionLoadLabelHistory extends ColocacionEvent {
+  final int limit;
+
+  const ColocacionLoadLabelHistory({this.limit = 50});
+
+  @override
+  List<Object?> get props => [limit];
+}

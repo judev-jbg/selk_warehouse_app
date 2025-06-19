@@ -1,3 +1,4 @@
+import 'package:selk_warehouse_app/features/colocacion/data/models/label_model.dart';
 import 'package:selk_warehouse_app/features/colocacion/domain/entities/operation_result.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../../../core/storage/database_helper.dart';
@@ -13,6 +14,12 @@ abstract class ColocacionLocalDataSource {
   Future<List<OperationResultModel>> getPendingOperations();
   Future<void> updateOperationStatus(String operationId, String status);
   Future<void> cleanExpiredCache();
+  Future<void> saveLabel(LabelModel label);
+  Future<List<LabelModel>> getPendingLabels();
+  Future<List<LabelModel>> getAllLabels({int limit = 50});
+  Future<void> updateLabelStatus(String labelId, String status, bool isPrinted);
+  Future<void> deleteLabels(List<String> labelIds);
+  Future<LabelModel?> getLabelByProductId(int productId);
 }
 
 class ColocacionLocalDataSourceImpl implements ColocacionLocalDataSource {
@@ -191,6 +198,137 @@ class ColocacionLocalDataSourceImpl implements ColocacionLocalDataSource {
         return OperationStatus.rolledBack;
       default:
         return OperationStatus.pending;
+    }
+  }
+
+  @override
+  Future<void> saveLabel(LabelModel label) async {
+    try {
+      final db = await databaseHelper.database;
+
+      // Si ya existe una etiqueta para este producto, la actualizamos
+      final existingLabel = await getLabelByProductId(label.product.id);
+
+      if (existingLabel != null) {
+        // Actualizar etiqueta existente con nueva localización
+        final updatedLabel = label.copyWith(
+          id: existingLabel.id,
+          createdAt:
+              existingLabel.createdAt, // Mantener fecha de creación original
+          updatedAt: DateTime.now(),
+        );
+
+        await db.update(
+          'labels',
+          updatedLabel.toDatabaseMap(),
+          where: 'id = ?',
+          whereArgs: [existingLabel.id],
+        );
+      } else {
+        // Crear nueva etiqueta
+        await db.insert(
+          'labels',
+          label.toDatabaseMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    } catch (e) {
+      throw CacheException('Error guardando etiqueta: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<List<LabelModel>> getPendingLabels() async {
+    try {
+      final db = await databaseHelper.database;
+
+      final result = await db.query(
+        'labels',
+        where: 'status = ? AND is_printed = ?',
+        whereArgs: ['pending', 0],
+        orderBy: 'updated_at DESC',
+      );
+
+      return result.map((row) => LabelModel.fromDatabase(row)).toList();
+    } catch (e) {
+      throw CacheException(
+          'Error obteniendo etiquetas pendientes: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<List<LabelModel>> getAllLabels({int limit = 50}) async {
+    try {
+      final db = await databaseHelper.database;
+
+      final result = await db.query(
+        'labels',
+        orderBy: 'updated_at DESC',
+        limit: limit,
+      );
+
+      return result.map((row) => LabelModel.fromDatabase(row)).toList();
+    } catch (e) {
+      throw CacheException('Error obteniendo etiquetas: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> updateLabelStatus(
+      String labelId, String status, bool isPrinted) async {
+    try {
+      final db = await databaseHelper.database;
+
+      await db.update(
+        'labels',
+        {
+          'status': status,
+          'is_printed': isPrinted ? 1 : 0,
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ?',
+        whereArgs: [labelId],
+      );
+    } catch (e) {
+      throw CacheException(
+          'Error actualizando estado de etiqueta: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> deleteLabels(List<String> labelIds) async {
+    try {
+      final db = await databaseHelper.database;
+
+      await db.delete(
+        'labels',
+        where: 'id IN (${labelIds.map((_) => '?').join(', ')})',
+        whereArgs: labelIds,
+      );
+    } catch (e) {
+      throw CacheException('Error eliminando etiquetas: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<LabelModel?> getLabelByProductId(int productId) async {
+    try {
+      final db = await databaseHelper.database;
+
+      final result = await db.query(
+        'labels',
+        where: 'product_id = ? AND status = ?',
+        whereArgs: [productId, 'pending'],
+        limit: 1,
+      );
+
+      if (result.isNotEmpty) {
+        return LabelModel.fromDatabase(result.first);
+      }
+      return null;
+    } catch (e) {
+      throw CacheException(
+          'Error obteniendo etiqueta por producto: ${e.toString()}');
     }
   }
 }
