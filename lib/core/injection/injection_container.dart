@@ -14,6 +14,9 @@ import 'package:selk_warehouse_app/features/colocacion/domain/usecases/search_pr
 import 'package:selk_warehouse_app/features/colocacion/domain/usecases/update_product_location.dart';
 import 'package:selk_warehouse_app/features/colocacion/domain/usecases/update_product_stock.dart';
 import 'package:selk_warehouse_app/features/colocacion/presentation/bloc/colocacion_bloc.dart';
+import 'package:selk_warehouse_app/features/colocacion/data/services/websocket_service.dart';
+import 'package:selk_warehouse_app/features/colocacion/data/services/optimistic_updates_service.dart';
+import 'package:selk_warehouse_app/features/colocacion/data/services/barcode_processor.dart';
 
 // Core
 import '../network/api_client.dart';
@@ -53,6 +56,7 @@ void _initAuth() {
         logoutUser: sl(),
         refreshToken: sl(),
         getCachedUser: sl(),
+        apiClient: sl(),
       ));
 
   // Use cases
@@ -134,13 +138,23 @@ void _initColocacion() {
 
   // Data sources
   sl.registerLazySingleton<ColocacionRemoteDataSource>(
-    () => ColocacionRemoteDataSourceImpl(apiClient: sl()),
+    () => ColocacionRemoteDataSourceImpl(
+      apiClient: sl(),
+      webSocketService: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<WebSocketService>(() => WebSocketService());
+
+  sl.registerLazySingleton<OptimisticUpdatesService>(
+    () => OptimisticUpdatesService(localDataSource: sl()),
   );
 
   sl.registerLazySingleton<ColocacionLocalDataSource>(
     () => ColocacionLocalDataSourceImpl(databaseHelper: sl()),
   );
 
+  sl.registerLazySingleton(() => BarcodeProcessor());
   // BLoC
   sl.registerFactory(() => ColocacionBloc(
         searchProductByBarcode: sl(),
@@ -150,6 +164,9 @@ void _initColocacion() {
         getPendingLabels: sl(),
         markLabelsAsPrinted: sl(),
         repository: sl(),
+        remoteDataSource: sl(),
+        optimisticUpdatesService: sl(),
+        webSocketService: sl(),
         logger: sl(),
       ));
 }

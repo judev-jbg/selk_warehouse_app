@@ -36,11 +36,14 @@ class ApiClient {
           if (_accessToken != null) {
             options.headers[ApiConstants.authorizationHeader] =
                 'Bearer $_accessToken';
+            _logger.d(
+                '🔐 Token agregado: Bearer ${_accessToken?.substring(0, 20)}...');
           }
 
           // Agregar device ID si existe
           if (_deviceId != null) {
             options.headers[ApiConstants.deviceIdHeader] = _deviceId;
+            _logger.d('📱 Device ID agregado: $_deviceId');
           }
 
           _logger.d('🚀 REQUEST: ${options.method} ${options.uri}');

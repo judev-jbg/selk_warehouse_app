@@ -2,9 +2,12 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:selk_warehouse_app/core/storage/secure_storage.dart'
+    as secureStorage;
 import '../../../../core/usecases/usecase.dart'; // Solo este import para NoParams
 import '../../domain/usecases/get_cached_user.dart';
 import '../../domain/usecases/login_user.dart';
+import '../../../../core/network/api_client.dart';
 import '../../domain/usecases/logout_user.dart';
 import '../../domain/usecases/refresh_token.dart';
 import 'auth_event.dart';
@@ -15,12 +18,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LogoutUser logoutUser;
   final RefreshToken refreshToken;
   final GetCachedUser getCachedUser;
+  final ApiClient apiClient;
   final Logger _logger = Logger();
 
   AuthBloc({
     required this.loginUser,
     required this.logoutUser,
     required this.refreshToken,
+    required this.apiClient,
     required this.getCachedUser,
   }) : super(AuthInitial()) {
     on<AuthLoginRequested>(_onLoginRequested);
@@ -54,6 +59,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         (loginResponse) {
           _logger
               .i('Login exitoso para usuario: ${loginResponse.user.username}');
+
+          // Configurar cliente API con el token de acceso
+          apiClient.setAccessToken(loginResponse.accessToken);
+          apiClient.setDeviceId(event.loginRequest.deviceIdentifier);
+
           emit(AuthAuthenticated(
             user: loginResponse.user,
             accessToken: loginResponse.accessToken,
@@ -78,6 +88,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // CORREGIDO: usar const NoParams() en lugar de NoParams()
       final result = await logoutUser(NoParams());
+      apiClient.clearCredentials();
 
       result.fold(
         (failure) {
@@ -115,14 +126,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           _logger.w('No hay sesión válida: ${failure.message}');
           emit(AuthUnauthenticated());
         },
-        (user) {
+        (user) async {
           _logger.i('Sesión válida encontrada para usuario: ${user.username}');
-          // TODO: Aquí deberíamos verificar si el token sigue siendo válido
-          // Por ahora, asumimos que es válido si está en caché
-          emit(AuthAuthenticated(
-            user: user,
-            accessToken: '', // Se cargará después
-          ));
+          try {
+            final storage = secureStorage.SecureStorage();
+            final accessToken = await storage.getAccessToken();
+            final deviceId = await storage.getDeviceId();
+
+            if (accessToken != null && deviceId != null) {
+              // Configurar token en API client
+              apiClient.setAccessToken(accessToken);
+              apiClient.setDeviceId(deviceId);
+
+              emit(AuthAuthenticated(
+                user: user,
+                accessToken: accessToken,
+              ));
+            } else {
+              emit(AuthUnauthenticated());
+            }
+          } catch (e) {
+            _logger.e('Error cargando tokens: $e');
+            emit(AuthUnauthenticated());
+          }
         },
       );
     } catch (e) {
@@ -159,6 +185,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         },
         (newAccessToken) {
           _logger.i('Token refrescado exitosamente');
+          apiClient.setAccessToken(newAccessToken);
           emit(AuthTokenRefreshed(newAccessToken: newAccessToken));
         },
       );

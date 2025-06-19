@@ -25,8 +25,8 @@ class ColocacionRemoteDataSourceImpl implements ColocacionRemoteDataSource {
 
   ColocacionRemoteDataSourceImpl({
     required this.apiClient,
-    WebSocketService? webSocketService,
-  }) : webSocketService = webSocketService ?? WebSocketService();
+    required this.webSocketService,
+  });
 
   /// Inicializar conexión WebSocket
   Future<void> initializeWebSocket() async {
